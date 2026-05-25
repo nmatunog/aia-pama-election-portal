@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import type { Env } from './env';
 import { authRoutes } from './routes/auth';
 import { electionRoutes } from './routes/elections';
+import { candidateRoutes } from './routes/candidates';
 import { nominationRoutes } from './routes/nominations';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -28,6 +29,7 @@ app.get('/health', (c) => {
 app.route('/auth', authRoutes);
 app.route('/elections', electionRoutes);
 app.route('/nominations', nominationRoutes);
+app.route('/candidates', candidateRoutes);
 
 app.post('/ballots/submit', async (c) => {
   return c.json(

@@ -11,6 +11,7 @@ import {
 import { PhaseBanner } from '@aia-pama/ui';
 import { getCurrentElectionPhase } from '@/lib/election-status';
 import { getSession } from '@/lib/session';
+import { getSessionToken, workerFetch } from '@/lib/worker-api';
 import { mainWide, pageShell, tileGrid } from '@/lib/layout-classes';
 
 export default async function DashboardPage() {
@@ -20,6 +21,16 @@ export default async function DashboardPage() {
   const phase = await getCurrentElectionPhase();
   const access = getPhaseAccess(phase);
   const bannerMessage = PHASE_BANNER_MESSAGES[phase];
+
+  let pendingInvitations = 0;
+  const token = await getSessionToken();
+  if (token && access.canNominate) {
+    const invRes = await workerFetch('/candidates/invitations');
+    const invData = (await invRes.json()) as { ok: boolean; invitations?: unknown[] };
+    if (invData.ok) {
+      pendingInvitations = invData.invitations?.length ?? 0;
+    }
+  }
 
   return (
     <div className={pageShell}>
@@ -54,10 +65,16 @@ export default async function DashboardPage() {
           />
           <DashboardTile
             icon="profile"
-            title="My Profile / Status"
-            description={`Zone: ${session.zone}. Participation status available after voting opens.`}
-            href="/dashboard"
-            enabled
+            title="Nomination invitations"
+            description={
+              pendingInvitations > 0
+                ? `${pendingInvitations} pending — accept or decline nominations for you.`
+                : `Zone: ${session.zone}. No pending nominations.`
+            }
+            href="/candidate"
+            accent={pendingInvitations > 0}
+            enabled={access.canNominate}
+            disabledMessage="Available during the nomination period when you are nominated."
           />
           <DashboardTile
             icon="info"

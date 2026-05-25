@@ -14,3 +14,9 @@ export type {
   NominationValidationContext,
   ValidationResult as NominationValidationResult,
 } from './nomination';
+
+export { validateCandidateAccept, validateCandidateDecline } from './candidate-response';
+export type {
+  CandidateResponseContext,
+  ValidationResult as CandidateResponseValidationResult,
+} from './candidate-response';

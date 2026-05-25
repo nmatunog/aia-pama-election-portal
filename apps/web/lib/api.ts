@@ -43,6 +43,23 @@ export type SubmitNominationResponse = {
   nominationId?: string;
 };
 
+export type CandidateInvitation = {
+  candidateId: string;
+  type: 'zonal' | 'national';
+  zone: string | null;
+  status: string;
+  nominatedAt: string;
+  nominationId: string;
+  nominatorName: string;
+};
+
+export type CandidateResponseResult = {
+  ok: boolean;
+  message?: string;
+  error?: string;
+  status?: string;
+};
+
 export type RequestOtpResponse = {
   ok: boolean;
   sessionId?: string;

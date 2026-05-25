@@ -57,6 +57,11 @@ export const nationalNominationSchema = z.object({
     .min(3, 'At least 3 endorsers required for national nomination'),
 });
 
+export const candidateResponseSchema = z.object({
+  electionId: z.string().uuid(),
+  candidateId: z.string().uuid(),
+});
+
 /** @deprecated Use validateMemberSchema + sendOtpSchema */
 export const requestOtpSchema = validateMemberSchema;
 
@@ -66,3 +71,4 @@ export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 export type SubmitBallotInput = z.infer<typeof submitBallotSchema>;
 export type ZonalNominationInput = z.infer<typeof zonalNominationSchema>;
 export type NationalNominationInput = z.infer<typeof nationalNominationSchema>;
+export type CandidateResponseInput = z.infer<typeof candidateResponseSchema>;

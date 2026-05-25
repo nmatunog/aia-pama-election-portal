@@ -120,6 +120,8 @@ curl -s -X POST http://localhost:3000/api/nominations/zonal \
 
 Visit `/nominate` while logged in to file nominations and view **My nominations**.
 
+Visit `/candidate` when you have been nominated to **accept or decline** (moves status to `pending_approval` or `declined`).
+
 **Quick start after pause:**
 
 ```bash
@@ -154,6 +156,6 @@ Official AIA Digital Red: `#D41245` — used on primary CTAs only (≤ 20% of la
 - [x] **Phase 0** — Monorepo scaffold, design tokens, DB schema, Worker skeleton
 - [x] **Phase 1** — Auth (OTP + License Code), Member Dashboard, Supabase election phase
 - [x] **Phase 2** — Nomination rules, API, wizard UI, my nominations list
-- [ ] Phase 3 — Candidate portal
+- [x] **Phase 3** — Candidate accept/decline portal (`/candidate`)
 - [ ] Phase 4 — Voting + vote secrecy
 - [ ] Phase 5 — Public dashboard + ELECOM admin
