@@ -64,6 +64,7 @@ export type RequestOtpResponse = {
   ok: boolean;
   sessionId?: string;
   devOtp?: string;
+  message?: string;
   error?: string;
 };
 

@@ -241,6 +241,15 @@ Deploy `apps/web` to Vercel (or similar). **Root directory:** `apps/web`.
 
 Optional: `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, Turnstile secret on Worker.
 
+**OTP email (production login):**
+
+1. Run migration `009_otp_sessions.sql` in Supabase SQL Editor.
+2. Create a [Resend](https://resend.com) API key.
+3. On the Worker: `npx wrangler secret put RESEND_API_KEY` (and optionally `OTP_EMAIL_FROM` with a verified domain).
+4. Redeploy the Worker (`npm run deploy` in `apps/api`).
+
+Until `RESEND_API_KEY` is set, production returns “Email service not configured”. Resend’s test sender (`onboarding@resend.dev`) only delivers to the email on your Resend account unless you verify a custom domain.
+
 ### 4. Smoke test
 
 1. Member OTP login → dashboard  

@@ -24,6 +24,7 @@ export function LoginForm() {
   const [otp, setOtp] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [devOtp, setDevOtp] = useState<string | null>(null);
+  const [otpMessage, setOtpMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +52,7 @@ export function LoginForm() {
       }
       setSessionId(data.sessionId);
       setDevOtp(data.devOtp ?? null);
+      setOtpMessage(data.message ?? null);
       setOtp('');
       setStep('otp');
     } catch (err) {
@@ -106,7 +108,8 @@ export function LoginForm() {
         <div className="rounded-lg border-l-4 border-l-[#1A7A3A] bg-white px-4 py-4 border border-[#E8E6E3]">
           <p className="font-semibold text-[#1A7A3A]">Membership verified</p>
           <p className="mt-1 text-base text-[#4D4D4D]">
-            Your license code was checked successfully. A one-time password is ready.
+            {otpMessage ??
+              'Your license code was checked successfully. A one-time password is ready.'}
           </p>
         </div>
 

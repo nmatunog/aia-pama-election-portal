@@ -2,6 +2,10 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=your-random-secret-at-least-32-chars
 
+# OTP email (optional in dev — Resend; production Worker secret required)
+# RESEND_API_KEY=re_...
+# OTP_EMAIL_FROM=AIA-PAMA Election <onboarding@resend.dev>
+
 # ELECOM admin (dev only — use Supabase Auth in production)
 ELECOM_ADMIN_EMAIL=nmatunog@gmail.com
 ELECOM_ADMIN_PASSWORD=change-me-elecom-dev

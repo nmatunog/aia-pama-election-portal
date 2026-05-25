@@ -2,11 +2,8 @@ import { Hono } from 'hono';
 import { hashLicenseCode, requestOtpSchema, verifyOtpSchema } from '@aia-pama/shared';
 import type { Env } from '../env';
 import { findMemberByLicenseHash } from '../lib/supabase';
-import {
-  generateOtp,
-  prepareMemberSession,
-  verifyOtpSession,
-} from '../lib/otp-store';
+import { sendOtpEmail } from '../lib/email';
+import { saveOtpSession, verifyOtpSessionDb } from '../lib/supabase-otp';
 import { isSuperuserLicense, superuserEmail } from '../lib/elecom-auth-config';
 import { signVoterToken, verifyVoterToken } from '../lib/jwt';
 
@@ -35,27 +32,51 @@ authRoutes.post('/request-otp', async (c) => {
   }
 
   const sessionId = crypto.randomUUID();
-  prepareMemberSession(
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+  const saved = await saveOtpSession(c.env, {
     sessionId,
     licenseHash,
-    member.id,
+    memberId: member.id,
     contact,
-    member.full_name,
-  );
-  const otp = generateOtp(sessionId);
+    memberName: member.full_name,
+    otp,
+  });
 
-  if (!otp) {
-    return c.json({ ok: false, error: 'Could not generate OTP session' }, 500);
+  if (!saved) {
+    return c.json({ ok: false, error: 'Could not create OTP session' }, 500);
+  }
+
+  const isDev = c.env.ENVIRONMENT === 'development';
+
+  if (!isDev) {
+    const emailed = await sendOtpEmail(c.env, contact, otp, member.full_name);
+    if (!emailed.ok) {
+      return c.json({ ok: false, error: emailed.error }, 503);
+    }
   }
 
   const response: {
     ok: true;
     sessionId: string;
     devOtp?: string;
-  } = { ok: true, sessionId };
+    message?: string;
+  } = {
+    ok: true,
+    sessionId,
+    message: isDev
+      ? 'Development mode: use the code shown below.'
+      : 'If this email is registered, a one-time code was sent. Check your inbox and spam folder.',
+  };
 
-  if (c.env.ENVIRONMENT === 'development') {
+  if (isDev) {
     response.devOtp = otp;
+    if (c.env.RESEND_API_KEY) {
+      const emailed = await sendOtpEmail(c.env, contact, otp, member.full_name);
+      if (!emailed.ok) {
+        response.message = `${response.message} (Email not sent: ${emailed.error})`;
+      }
+    }
   }
 
   return c.json(response);
@@ -74,7 +95,7 @@ authRoutes.post('/verify-otp', async (c) => {
 
   const { licenseCode, otp, sessionId } = parsed.data;
   const licenseHash = await hashLicenseCode(licenseCode);
-  const verified = verifyOtpSession(sessionId, licenseHash, otp);
+  const verified = await verifyOtpSessionDb(c.env, sessionId, licenseHash, otp);
 
   if (!verified.ok) {
     return c.json({ ok: false, error: 'Invalid or expired OTP' }, 401);
