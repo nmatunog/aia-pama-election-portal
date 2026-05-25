@@ -1,0 +1,21 @@
+{
+  "name": "aia-pama-election-portal",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@aia-pama/web",
+    "dev:api": "npm run dev --workspace=@aia-pama/api",
+    "dev:all": "npm run dev --workspace=@aia-pama/web & npm run dev --workspace=@aia-pama/api",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "seed:members": "node scripts/seed-members.mjs --write --csv --apply",
+    "seed:election": "node scripts/seed-election.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

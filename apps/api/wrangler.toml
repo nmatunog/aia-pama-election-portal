@@ -1,0 +1,14 @@
+name = "aia-pama-election-api"
+main = "src/index.ts"
+compatibility_date = "2025-05-01"
+
+[vars]
+ENVIRONMENT = "development"
+
+# Add apps/api/.dev.vars (gitignored) with:
+# SUPABASE_URL=https://xxx.supabase.co
+# SUPABASE_SERVICE_ROLE_KEY=eyJ...
+# JWT_SECRET=your-random-secret-at-least-32-chars
+
+[dev]
+port = 8787

@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@source "../../../packages/ui/src";
+
+@theme {
+  --min-height-touch: 48px;
+  --font-size-body: 18px;
+  --color-aia-red: #D41245;
+  --color-aia-red-hover: #B0103A;
+  --color-aia-red-subtle: #FDF2F5;
+  --color-aia-orange: #FA4132;
+  --color-aia-blue: #63A9FA;
+  --color-surface-page: #F8F7F5;
+  --color-surface-card: #FFFFFF;
+  --color-ink-primary: #1C1C1C;
+  --color-ink-secondary: #4D4D4D;
+  --color-border: #E8E6E3;
+  --font-sans: var(--font-inter), Inter, "Source Sans 3", system-ui, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-surface-page);
+  color: var(--color-ink-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+@media (min-width: 640px) {
+  body {
+    font-size: 18px;
+  }
+}
+
+/* Safe areas for notched phones / iPad */
+.safe-top {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-x {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* Prevent iOS zoom on input focus (16px+ on mobile) */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
