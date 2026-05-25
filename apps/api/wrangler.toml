@@ -3,7 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2025-05-01"
 
 [vars]
-ENVIRONMENT = "development"
+ENVIRONMENT = "production"
 
 # Add apps/api/.dev.vars (gitignored) with:
 # SUPABASE_URL=https://xxx.supabase.co
