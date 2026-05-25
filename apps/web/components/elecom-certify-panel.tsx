@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { FormattedDateTime } from '@/components/formatted-datetime';
 import { primaryBtn } from '@/lib/layout-classes';
 
 type Props = {
@@ -61,9 +62,7 @@ export function ElecomCertifyPanel({
         </h3>
         <p className="mt-2 text-sm text-[#4D4D4D]">
           Certified on{' '}
-          <span className="font-semibold text-[#1C1C1C]">
-            {new Date(certifiedAt).toLocaleString()}
-          </span>
+          <FormattedDateTime iso={certifiedAt} className="font-semibold text-[#1C1C1C]" />
           . Members see the announcement on their dashboard and on{' '}
           <a href="/candidates" className="font-semibold text-[#63A9FA] underline" target="_blank" rel="noreferrer">
             Election information

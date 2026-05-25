@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ZONES } from '@aia-pama/shared';
+import { formatDateTimeLong } from '@/lib/format-datetime';
 import type { CertifiedElectionResults } from '@aia-pama/shared';
 
 export type CertifiedAnnouncementData = {
@@ -30,10 +31,7 @@ export function CertifiedResultsAnnouncement({ data }: Props) {
   const displaced = data.displacedFromNational ?? [];
 
   const certifiedDate = data.certifiedAt
-    ? new Date(data.certifiedAt).toLocaleString(undefined, {
-        dateStyle: 'long',
-        timeStyle: 'short',
-      })
+    ? formatDateTimeLong(data.certifiedAt)
     : null;
 
   return (

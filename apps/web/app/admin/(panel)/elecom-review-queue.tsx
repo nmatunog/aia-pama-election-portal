@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { FormattedDateTime } from '@/components/formatted-datetime';
 import { actionRowPrimaryFirst, primaryBtn, secondaryBtn } from '@/lib/layout-classes';
 
 export type PendingCandidate = {
@@ -82,7 +83,7 @@ export function ElecomReviewQueue({ electionId, initial }: Props) {
             {c.zone ? ` · Position zone: ${c.zone}` : ''}
           </p>
           <p className="mt-1 text-xs text-[#4D4D4D]">
-            Nominated {new Date(c.nominatedAt).toLocaleString()}
+            Nominated <FormattedDateTime iso={c.nominatedAt} />
           </p>
           {rejectId === c.candidateId ? (
             <div className="mt-4">

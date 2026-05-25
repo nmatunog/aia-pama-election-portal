@@ -43,8 +43,8 @@ authRoutes.post('/request-otp', async (c) => {
     otp,
   });
 
-  if (!saved) {
-    return c.json({ ok: false, error: 'Could not create OTP session' }, 500);
+  if (!saved.ok) {
+    return c.json({ ok: false, error: saved.error }, 500);
   }
 
   const isDev = c.env.ENVIRONMENT === 'development';

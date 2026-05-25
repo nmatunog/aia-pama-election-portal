@@ -15,3 +15,5 @@ CREATE INDEX IF NOT EXISTS idx_otp_sessions_expires ON otp_sessions(expires_at);
 ALTER TABLE otp_sessions ENABLE ROW LEVEL SECURITY;
 
 -- No anon/authenticated policies — only service_role (Worker) can access
+
+GRANT ALL ON public.otp_sessions TO service_role;

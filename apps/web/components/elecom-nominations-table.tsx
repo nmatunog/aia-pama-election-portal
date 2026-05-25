@@ -1,5 +1,7 @@
 'use client';
 
+import { FormattedDateTime } from '@/components/formatted-datetime';
+
 export type AdminNominationRow = {
   nominationId: string;
   type: 'zonal' | 'national';
@@ -53,7 +55,7 @@ export function ElecomNominationsTable({ nominations }: Props) {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-[#4D4D4D]">
-                  {new Date(n.createdAt).toLocaleString()}
+                  <FormattedDateTime iso={n.createdAt} />
                 </td>
               </tr>
             ))

@@ -3,6 +3,7 @@
 import { ZONES } from '@aia-pama/shared';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { FormattedDateTime } from '@/components/formatted-datetime';
 import { primaryBtn } from '@/lib/layout-classes';
 
 export type AdminVoterRow = {
@@ -146,7 +147,7 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
                 </td>
                 <td className="px-4 py-3 text-[#4D4D4D]">
                   {v.hasVoted
-                    ? new Date(v.votedAt!).toLocaleString()
+                    ? <FormattedDateTime iso={v.votedAt!} />
                     : '—'}
                 </td>
               </tr>

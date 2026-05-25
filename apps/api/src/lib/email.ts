@@ -25,6 +25,7 @@ export async function sendOtpEmail(
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
+      'User-Agent': 'aia-pama-election-api/1.0',
     },
     body: JSON.stringify({
       from,
@@ -46,7 +47,24 @@ export async function sendOtpEmail(
   if (!res.ok) {
     const text = await res.text();
     console.error('Resend error:', res.status, text);
-    return { ok: false, error: 'Failed to send email. Please try again.' };
+
+    let message = 'Failed to send email. Please try again.';
+    try {
+      const body = JSON.parse(text) as { message?: string };
+      const m = body.message ?? '';
+      if (m.includes('only send testing emails to your own email')) {
+        message =
+          'OTP email could not be sent: Resend test mode only allows mail to the address on your Resend account. Use that email at login, or verify a domain at resend.com/domains and set OTP_EMAIL_FROM on the Worker.';
+      } else if (m.includes('API key is invalid') || res.status === 401) {
+        message = 'Email service misconfigured (invalid RESEND_API_KEY on Worker).';
+      } else if (m) {
+        message = `Email could not be sent: ${m}`;
+      }
+    } catch {
+      /* use default message */
+    }
+
+    return { ok: false, error: message };
   }
 
   return { ok: true };

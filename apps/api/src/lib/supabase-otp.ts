@@ -13,14 +13,14 @@ export async function saveOtpSession(
     memberName: string;
     otp: string;
   },
-): Promise<boolean> {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
 
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/otp_sessions`, {
     method: 'POST',
     headers: {
       ...supabaseHeaders(env),
-      Prefer: 'resolution=merge-duplicates',
+      Prefer: 'return=minimal',
     },
     body: JSON.stringify({
       id: input.sessionId,
@@ -34,10 +34,24 @@ export async function saveOtpSession(
   });
 
   if (!res.ok) {
-    console.error('otp_sessions insert failed:', res.status, await res.text());
-    return false;
+    const detail = await res.text();
+    console.error('otp_sessions insert failed:', res.status, detail);
+    if (res.status === 403 && detail.includes('permission denied')) {
+      return {
+        ok: false,
+        error:
+          'OTP table not granted to API — run migration 010_otp_sessions_grants.sql in Supabase',
+      };
+    }
+    if (res.status === 404 || detail.includes('does not exist')) {
+      return {
+        ok: false,
+        error: 'OTP table missing — run migration 009_otp_sessions.sql in Supabase',
+      };
+    }
+    return { ok: false, error: 'Could not save OTP session' };
   }
-  return true;
+  return { ok: true };
 }
 
 export async function verifyOtpSessionDb(
