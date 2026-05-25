@@ -47,15 +47,24 @@ type PublicResponse = {
 };
 
 export default async function CandidatesPage() {
-  const res = await fetch(`${WORKER_URL}/public/candidates`, { cache: 'no-store' });
-  const data = (await res.json()) as PublicResponse;
+  let data: PublicResponse = { ok: false, error: 'Election information unavailable.' };
+  try {
+    const res = await fetch(`${WORKER_URL}/public/candidates`, { cache: 'no-store' });
+    data = (await res.json()) as PublicResponse;
+  } catch {
+    data = { ok: false, error: 'Could not reach the election API.' };
+  }
 
   let certifiedAnnouncement: CertifiedAnnouncementData | null = null;
   if (data.election?.phase === 'certified') {
-    const certRes = await fetch(`${WORKER_URL}/elections/certified-announcement`, {
-      cache: 'no-store',
-    });
-    certifiedAnnouncement = (await certRes.json()) as CertifiedAnnouncementData;
+    try {
+      const certRes = await fetch(`${WORKER_URL}/elections/certified-announcement`, {
+        cache: 'no-store',
+      });
+      certifiedAnnouncement = (await certRes.json()) as CertifiedAnnouncementData;
+    } catch {
+      certifiedAnnouncement = null;
+    }
   }
 
   if (!data.ok || !data.election) {

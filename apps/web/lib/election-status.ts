@@ -6,8 +6,12 @@ import { fetchActiveElection } from './supabase/server';
 
 /** Current election phase — Supabase first, then env fallback */
 export async function getCurrentElectionPhase(): Promise<ElectionPhase> {
-  const election = await fetchActiveElection();
-  if (election) return election.phase;
+  try {
+    const election = await fetchActiveElection();
+    if (election) return election.phase;
+  } catch {
+    /* build / network — use env or default */
+  }
 
   const fromEnv = process.env.NEXT_PUBLIC_ELECTION_PHASE;
   if (fromEnv && ELECTION_PHASES.includes(fromEnv as ElectionPhase)) {

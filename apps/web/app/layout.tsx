@@ -23,6 +23,9 @@ export const viewport = {
   viewportFit: 'cover',
 };
 
+/** Election data comes from Supabase/Worker — skip static prerender at build time */
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{

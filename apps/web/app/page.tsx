@@ -14,7 +14,8 @@ import { mainWide, pageShell, tileGrid } from '@/lib/layout-classes';
 export default async function HomePage() {
   const phase = await getCurrentElectionPhase();
   const access = getPhaseAccess(phase);
-  const bannerMessage = PHASE_BANNER_MESSAGES[phase];
+  const bannerMessage =
+    PHASE_BANNER_MESSAGES[phase] ?? PHASE_BANNER_MESSAGES.nomination;
 
   return (
     <div className={pageShell}>
