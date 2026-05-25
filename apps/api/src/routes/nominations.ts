@@ -183,7 +183,7 @@ nominationRoutes.post('/zonal', async (c) => {
   const result = await submitNominationPackage(c.env, {
     electionId: election.id,
     type: 'zonal',
-    zone: voter.zone,
+    zone: candidate.zone,
     candidateMemberId: candidate.id,
     nominatorLicenseHash: voter.licenseHash,
     endorserLicenseHashes: endorserHashes,

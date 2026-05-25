@@ -8,6 +8,7 @@ import type { Env } from '../env';
 import { getCurrentElection } from '../lib/supabase-election';
 import {
   getCandidateForMember,
+  listMyCandidacies,
   listPendingInvitations,
   updateCandidateStatus,
 } from '../lib/supabase-candidates';
@@ -27,6 +28,23 @@ candidateRoutes.get('/invitations', async (c) => {
 
   const invitations = await listPendingInvitations(c.env, election.id, voter.sub);
   return c.json({ ok: true, electionId: election.id, invitations });
+});
+
+candidateRoutes.get('/mine', async (c) => {
+  const voter = c.get('voter');
+  const election = await getCurrentElection(c.env);
+  if (!election) {
+    return c.json({ ok: false, error: 'No active election' }, 404);
+  }
+
+  const candidacies = await listMyCandidacies(c.env, election.id, voter.sub);
+  const pendingCount = candidacies.filter((c) => c.status === 'pending_acceptance').length;
+  return c.json({
+    ok: true,
+    electionId: election.id,
+    candidacies,
+    pendingCount,
+  });
 });
 
 async function respondToNomination(

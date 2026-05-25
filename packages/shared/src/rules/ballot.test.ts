@@ -41,4 +41,21 @@ describe('validateBallot', () => {
     );
     expect(result.ok).toBe(false);
   });
+
+  it('rejects zonal candidate outside voter zone', () => {
+    const zones = new Map([
+      ['z1', 'Visayas'],
+      ['z2', 'Mindanao'],
+    ]);
+    const result = validateBallot(
+      { zonalCandidateId: 'z2', nationalCandidateIds: [] },
+      {
+        approvedZonalIds: zonalIds,
+        approvedNationalIds: nationalIds,
+        voterZone: 'Visayas',
+        zonalCandidateZones: zones,
+      },
+    );
+    expect(result.ok).toBe(false);
+  });
 });

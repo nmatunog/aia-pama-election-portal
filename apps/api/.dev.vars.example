@@ -1,3 +1,9 @@
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=your-random-secret-at-least-32-chars
+
+# ELECOM admin (dev only — use Supabase Auth in production)
+ELECOM_ADMIN_EMAIL=nmatunog@gmail.com
+ELECOM_ADMIN_PASSWORD=change-me-elecom-dev
+# Member license codes with superuser access (comma-separated)
+ELECOM_SUPERUSER_LICENSES=007264013

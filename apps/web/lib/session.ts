@@ -6,6 +6,7 @@ export type SessionMember = {
   id: string;
   fullName: string;
   zone: string;
+  isElecom?: boolean;
 };
 
 export async function getSession(): Promise<SessionMember | null> {
@@ -26,6 +27,7 @@ export async function getSession(): Promise<SessionMember | null> {
       id: payload.sub,
       fullName: payload.name,
       zone: String(payload.zone),
+      isElecom: payload.elecom === true,
     };
   } catch {
     return null;

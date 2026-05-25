@@ -25,7 +25,8 @@ export const PHASE_BANNER_MESSAGES: Partial<Record<ElectionPhase, string>> = {
   voting:
     'Voting is open. Cast your official ballot before the window closes.',
   canvassing: 'Voting has closed. ELECOM is canvassing results.',
-  certified: 'Results have been certified by ELECOM.',
+  certified:
+    'ELECOM has certified the election results. See the official announcement on your dashboard.',
   failed: 'This election has been declared a failure of election.',
   draft: 'Election setup is in progress. Check back soon.',
 };

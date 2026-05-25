@@ -7,14 +7,19 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=@aia-pama/web",
-    "dev:api": "npm run dev --workspace=@aia-pama/api",
+    "dev:api": "bash scripts/start-api.sh",
+    "dev:api:clean": "bash scripts/start-api.sh --clean",
     "dev:all": "npm run dev --workspace=@aia-pama/web & npm run dev --workspace=@aia-pama/api",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "seed:members": "node scripts/seed-members.mjs --write --csv --apply",
     "seed:election": "node scripts/seed-election.mjs",
-    "save:push": "bash scripts/save-and-push.sh"
+    "seed:mock-results": "node scripts/seed-mock-results.mjs --reset",
+    "save:push": "bash scripts/save-and-push.sh",
+    "test:phase3": "USE_WORKER=1 node scripts/test-phase3.mjs",
+    "test:phase4": "node scripts/test-phase4.mjs",
+    "test:phase5": "node scripts/test-phase5.mjs"
   },
   "engines": {
     "node": ">=20"

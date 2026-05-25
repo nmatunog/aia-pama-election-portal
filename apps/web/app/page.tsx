@@ -63,7 +63,7 @@ export default async function HomePage() {
             icon="admin"
             title="ELECOM Admin"
             description="Election committee administration portal."
-            href="/admin"
+            href="/admin/login"
             enabled
           />
         </section>

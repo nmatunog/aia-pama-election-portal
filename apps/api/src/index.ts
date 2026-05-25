@@ -3,8 +3,11 @@ import { cors } from 'hono/cors';
 import type { Env } from './env';
 import { authRoutes } from './routes/auth';
 import { electionRoutes } from './routes/elections';
+import { adminRoutes } from './routes/admin';
+import { ballotRoutes } from './routes/ballots';
 import { candidateRoutes } from './routes/candidates';
 import { nominationRoutes } from './routes/nominations';
+import { publicRoutes } from './routes/public';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -12,7 +15,7 @@ app.use(
   '*',
   cors({
     origin: ['http://localhost:3000'],
-    allowMethods: ['GET', 'POST', 'OPTIONS'],
+    allowMethods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   }),
@@ -30,13 +33,9 @@ app.route('/auth', authRoutes);
 app.route('/elections', electionRoutes);
 app.route('/nominations', nominationRoutes);
 app.route('/candidates', candidateRoutes);
-
-app.post('/ballots/submit', async (c) => {
-  return c.json(
-    { ok: false, error: 'Ballot submission not yet implemented' },
-    501,
-  );
-});
+app.route('/admin', adminRoutes);
+app.route('/ballots', ballotRoutes);
+app.route('/public', publicRoutes);
 
 app.notFound((c) => c.json({ ok: false, error: 'Not found' }, 404));
 

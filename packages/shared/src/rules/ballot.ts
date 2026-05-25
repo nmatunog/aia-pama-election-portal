@@ -18,13 +18,26 @@ export function validateBallot(
   options: {
     approvedZonalIds: Set<string>;
     approvedNationalIds: Set<string>;
+    /** When set, zonal pick must be for this zone (Election Code zone ballot) */
+    voterZone?: string;
+    zonalCandidateZones?: Map<string, string>;
   },
 ): ValidationResult {
   const { zonalCandidateId, nationalCandidateIds } = input;
-  const { approvedZonalIds, approvedNationalIds } = options;
+  const { approvedZonalIds, approvedNationalIds, voterZone, zonalCandidateZones } = options;
 
   if (!approvedZonalIds.has(zonalCandidateId)) {
     return { ok: false, error: 'Invalid zonal candidate selection' };
+  }
+
+  if (voterZone && zonalCandidateZones) {
+    const candidateZone = zonalCandidateZones.get(zonalCandidateId);
+    if (candidateZone !== voterZone) {
+      return {
+        ok: false,
+        error: 'Zonal vote must be for a candidate in your zone',
+      };
+    }
   }
 
   if (nationalCandidateIds.length > RULES.MAX_NATIONAL_VOTES) {
@@ -45,12 +58,7 @@ export function validateBallot(
     }
   }
 
-  if (nationalCandidateIds.includes(zonalCandidateId)) {
-    return {
-      ok: false,
-      error: 'Cannot vote for the same person in zonal and national',
-    };
-  }
+  /** Voters may vote for the same person zonal and national; certification excludes zonal winners from national seats. */
 
   return { ok: true, data: input };
 }

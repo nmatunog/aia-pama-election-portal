@@ -9,10 +9,14 @@ export type ElectionRow = {
   phase: ElectionPhase;
   nomination_closes_at: string | null;
   voting_closes_at: string | null;
+  certified_at: string | null;
 };
 
+const ELECTION_SELECT =
+  'id,cycle_year,phase,nomination_closes_at,voting_closes_at,certified_at';
+
 export async function getCurrentElection(env: Env): Promise<ElectionRow | null> {
-  const url = `${env.SUPABASE_URL}/rest/v1/elections?select=id,cycle_year,phase,nomination_closes_at,voting_closes_at&order=created_at.desc&limit=1`;
+  const url = `${env.SUPABASE_URL}/rest/v1/elections?select=${ELECTION_SELECT}&order=created_at.desc&limit=1`;
 
   const res = await fetch(url, { headers: supabaseHeaders(env) });
   if (!res.ok) {
@@ -26,4 +30,28 @@ export async function getCurrentElection(env: Env): Promise<ElectionRow | null> 
 
   const phase = ELECTION_PHASES.includes(row.phase) ? row.phase : 'draft';
   return { ...row, phase };
+}
+
+export async function certifyElectionRecord(
+  env: Env,
+  electionId: string,
+): Promise<{ ok: true; certifiedAt: string } | { error: string }> {
+  const certifiedAt = new Date().toISOString();
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/elections?id=eq.${electionId}`, {
+    method: 'PATCH',
+    headers: supabaseHeaders(env, { Prefer: 'return=representation' }),
+    body: JSON.stringify({
+      phase: 'certified',
+      certified_at: certifiedAt,
+      updated_at: certifiedAt,
+    }),
+  });
+
+  if (!res.ok) {
+    console.error('Certify election failed:', res.status, await res.text());
+    return { error: 'Could not certify election' };
+  }
+
+  const rows = (await res.json()) as { certified_at: string }[];
+  return { ok: true, certifiedAt: rows[0]?.certified_at ?? certifiedAt };
 }

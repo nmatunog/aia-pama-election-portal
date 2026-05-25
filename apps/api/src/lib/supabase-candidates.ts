@@ -26,24 +26,10 @@ export type CandidateInvitation = {
   nominatorName: string;
 };
 
-export async function listPendingInvitations(
+async function mapCandidateRows(
   env: Env,
-  electionId: string,
-  memberId: string,
+  rows: CandidateInvitationRow[],
 ): Promise<CandidateInvitation[]> {
-  const url =
-    `${env.SUPABASE_URL}/rest/v1/candidates?` +
-    `election_id=eq.${electionId}&member_id=eq.${memberId}&status=eq.pending_acceptance` +
-    `&select=id,type,zone,status,created_at,nominations(id,type,created_at,nominator_license_hash)` +
-    `&order=created_at.desc`;
-
-  const res = await fetch(url, { headers: supabaseHeaders(env) });
-  if (!res.ok) {
-    console.error('List pending invitations failed:', res.status, await res.text());
-    return [];
-  }
-
-  const rows = (await res.json()) as CandidateInvitationRow[];
   const invitations: CandidateInvitation[] = [];
 
   for (const row of rows) {
@@ -68,6 +54,36 @@ export async function listPendingInvitations(
   }
 
   return invitations;
+}
+
+export async function listMyCandidacies(
+  env: Env,
+  electionId: string,
+  memberId: string,
+): Promise<CandidateInvitation[]> {
+  const url =
+    `${env.SUPABASE_URL}/rest/v1/candidates?` +
+    `election_id=eq.${electionId}&member_id=eq.${memberId}` +
+    `&select=id,type,zone,status,created_at,nominations(id,type,created_at,nominator_license_hash)` +
+    `&order=created_at.desc`;
+
+  const res = await fetch(url, { headers: supabaseHeaders(env) });
+  if (!res.ok) {
+    console.error('List candidacies failed:', res.status, await res.text());
+    return [];
+  }
+
+  const rows = (await res.json()) as CandidateInvitationRow[];
+  return mapCandidateRows(env, rows);
+}
+
+export async function listPendingInvitations(
+  env: Env,
+  electionId: string,
+  memberId: string,
+): Promise<CandidateInvitation[]> {
+  const all = await listMyCandidacies(env, electionId, memberId);
+  return all.filter((c) => c.status === 'pending_acceptance');
 }
 
 export async function getCandidateForMember(

@@ -97,6 +97,28 @@ describe('validateNationalNomination', () => {
     expect(result.ok).toBe(false);
   });
 
+  it('allows national nomination when member already has zonal candidacy', () => {
+    const result = validateNationalNomination(
+      {
+        candidateMemberId: 'c1',
+        endorserMemberIds: ['e1', 'e2', 'e3'],
+      },
+      baseCtx({
+        candidateAlreadyNominatedZonal: true,
+        endorsers: [visayas('e1'), visayas('e2'), visayas('e3')],
+      }),
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it('allows zonal nomination when member already has national candidacy', () => {
+    const result = validateZonalNomination(
+      { candidateMemberId: 'c1', endorserMemberIds: ['e1'] },
+      baseCtx({ candidateAlreadyNominatedNational: true }),
+    );
+    expect(result.ok).toBe(true);
+  });
+
   it('rejects when nominator exceeded national nomination limit', () => {
     const result = validateNationalNomination(
       { candidateMemberId: 'c1', endorserMemberIds: ['e1', 'e2', 'e3'] },

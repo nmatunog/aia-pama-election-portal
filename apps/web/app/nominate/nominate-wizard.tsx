@@ -184,8 +184,9 @@ export function NominateWizard({
           >
             <p className="text-lg font-semibold text-[#1C1C1C]">Zonal</p>
             <p className="mt-2 text-sm text-[#4D4D4D]">
-              One nominee from your zone. Requires {RULES.MIN_ZONAL_ENDORSERS} endorser from your
-              zone.
+              Zonal seat for <strong>{memberZone}</strong> only — nominee must be a member of your
+              zone. Requires {RULES.MIN_ZONAL_ENDORSERS} endorser from your zone. The same person
+              may also be nominated nationally.
             </p>
             {!limits.canSubmitZonal && (
               <p className="mt-2 text-sm font-medium text-[#9A6700]">
@@ -208,8 +209,9 @@ export function NominateWizard({
           >
             <p className="text-lg font-semibold text-[#1C1C1C]">National</p>
             <p className="mt-2 text-sm text-[#4D4D4D]">
-              National Board seat. Requires at least {RULES.MIN_NATIONAL_ENDORSERS} endorsers
-              (any zone).
+              National Board seat — nominees may be from any zone. Requires at least{' '}
+              {RULES.MIN_NATIONAL_ENDORSERS} endorsers. A zonal nominee may also run nationally;
+              if they win their zone, they are not seated on the national board.
             </p>
             {!limits.canSubmitNational && (
               <p className="mt-2 text-sm font-medium text-[#9A6700]">

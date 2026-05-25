@@ -7,6 +7,7 @@ import {
   prepareMemberSession,
   verifyOtpSession,
 } from '../lib/otp-store';
+import { isSuperuserLicense, superuserEmail } from '../lib/elecom-auth-config';
 import { signVoterToken, verifyVoterToken } from '../lib/jwt';
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
@@ -89,12 +90,15 @@ authRoutes.post('/verify-otp', async (c) => {
     return c.json({ ok: false, error: 'Server misconfigured' }, 500);
   }
 
+  const superuser = await isSuperuserLicense(c.env, parsed.data.licenseCode);
   const token = await signVoterToken(
     {
       sub: member.id,
       name: member.full_name,
       zone: member.zone,
       licenseHash,
+      elecom: superuser,
+      email: superuser ? superuserEmail(c.env) : undefined,
     },
     secret,
   );
@@ -102,7 +106,11 @@ authRoutes.post('/verify-otp', async (c) => {
   return c.json({
     ok: true,
     token,
-    member: { fullName: member.full_name, zone: member.zone },
+    member: {
+      fullName: member.full_name,
+      zone: member.zone,
+      isElecom: superuser,
+    },
   });
 });
 
@@ -122,6 +130,10 @@ authRoutes.get('/me', async (c) => {
 
   return c.json({
     ok: true,
-    member: { fullName: claims.name, zone: claims.zone },
+    member: {
+      fullName: claims.name,
+      zone: claims.zone,
+      isElecom: claims.elecom === true,
+    },
   });
 });

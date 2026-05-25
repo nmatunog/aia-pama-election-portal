@@ -102,7 +102,8 @@ export function validateZonalNomination(
   if (ctx.candidate.zone !== ctx.nominator.zone) {
     return {
       ok: false,
-      error: 'Zonal candidates must be from your zone',
+      error:
+        'A zonal candidate may only run for their own zone (nominee must be a member of your zone)',
     };
   }
 
@@ -172,6 +173,8 @@ export function validateNationalNomination(
   if (ctx.candidateAlreadyNominatedNational) {
     return { ok: false, error: 'This member is already a national nominee for this election' };
   }
+
+  /** National nominees may be from any zone; dual zonal + national candidacy is allowed. */
 
   if (input.endorserMemberIds.length < RULES.MIN_NATIONAL_ENDORSERS) {
     return {

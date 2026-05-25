@@ -8,11 +8,13 @@ import { getSession } from '@/lib/session';
 import { getSessionToken, workerFetch } from '@/lib/worker-api';
 import { mainNarrow, pageLead, pageShell, pageTitle } from '@/lib/layout-classes';
 import { CandidateInvitations, type CandidateInvitation } from './candidate-invitations';
+import { CandidateStatus } from './candidate-status';
 
-type InvitationsResponse = {
+type CandidaciesResponse = {
   ok: boolean;
   electionId?: string;
-  invitations?: CandidateInvitation[];
+  candidacies?: CandidateInvitation[];
+  pendingCount?: number;
   error?: string;
 };
 
@@ -26,9 +28,10 @@ export default async function CandidatePage() {
   const token = await getSessionToken();
   if (!token) redirect('/login?next=/candidate');
 
-  const res = await workerFetch('/candidates/invitations');
-  const data = (await res.json()) as InvitationsResponse;
-  const invitations = data.ok ? (data.invitations ?? []) : [];
+  const res = await workerFetch('/candidates/mine');
+  const data = (await res.json()) as CandidaciesResponse;
+  const candidacies = data.ok ? (data.candidacies ?? []) : [];
+  const invitations = candidacies.filter((c) => c.status === 'pending_acceptance');
   const electionId = data.electionId ?? '';
 
   return (
@@ -65,7 +68,10 @@ export default async function CandidatePage() {
             {data.error ?? 'Could not load invitations. Ensure npm run dev:api is running.'}
           </p>
         ) : (
-          <CandidateInvitations electionId={electionId} invitations={invitations} />
+          <>
+            <CandidateInvitations electionId={electionId} invitations={invitations} />
+            <CandidateStatus candidacies={candidacies} />
+          </>
         )}
       </main>
     </div>

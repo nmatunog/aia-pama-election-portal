@@ -7,4 +7,9 @@ export type Env = {
   OTP_PROVIDER_API_KEY?: string;
   RESEND_API_KEY?: string;
   OTP_EMAIL_FROM?: string;
+  ELECOM_ADMIN_EMAIL?: string;
+  ELECOM_ADMIN_EMAILS?: string;
+  ELECOM_ADMIN_PASSWORD?: string;
+  /** Comma-separated license codes with ELECOM superuser access */
+  ELECOM_SUPERUSER_LICENSES?: string;
 };

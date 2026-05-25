@@ -7,7 +7,7 @@ type PhaseBannerProps = {
   closesAt?: string;
 };
 
-const activePhases: ElectionPhase[] = ['nomination', 'voting'];
+const activePhases: ElectionPhase[] = ['nomination', 'voting', 'canvassing', 'certified'];
 
 export function PhaseBanner({ phase, message, closesAt }: PhaseBannerProps) {
   const isActive = activePhases.includes(phase);
