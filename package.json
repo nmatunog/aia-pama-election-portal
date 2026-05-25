@@ -13,7 +13,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "seed:members": "node scripts/seed-members.mjs --write --csv --apply",
-    "seed:election": "node scripts/seed-election.mjs"
+    "seed:election": "node scripts/seed-election.mjs",
+    "save:push": "bash scripts/save-and-push.sh"
   },
   "engines": {
     "node": ">=20"

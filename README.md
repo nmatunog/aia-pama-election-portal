@@ -129,6 +129,22 @@ npm run dev:api      # terminal 2 — http://localhost:8787
 
 If needed: `npm run seed:election` and `npm run seed:members`.
 
+## Save & push before pausing
+
+After a major revision (or before stopping for the day), commit and push to GitHub:
+
+```bash
+npm run save:push
+```
+
+With a custom message:
+
+```bash
+npm run save:push -- "Phase 3: candidate accept/decline portal"
+```
+
+The script runs `typecheck`, refuses to stage `.env.local` / `.dev.vars`, commits all other changes, and pushes to `origin` on the current branch. Skip typecheck when needed: `SKIP_TYPECHECK=1 npm run save:push`.
+
 ## Brand Colors
 
 Official AIA Digital Red: `#D41245` — used on primary CTAs only (≤ 20% of layout).
