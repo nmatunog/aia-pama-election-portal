@@ -34,7 +34,7 @@ export async function findMemberById(
   env: Env,
   memberId: string,
 ): Promise<MemberWithHash | null> {
-  const url = `${env.SUPABASE_URL}/rest/v1/members?id=eq.${memberId}&select=id,full_name,zone,good_standing,active,approval_status,license_code_hash&limit=1`;
+  const url = `${env.SUPABASE_URL}/rest/v1/members?id=eq.${memberId}&select=id,full_name,zone,good_standing,active,license_code_hash&limit=1`;
 
   const res = await fetch(url, { headers: supabaseHeaders(env) });
   if (!res.ok) {
@@ -52,7 +52,7 @@ export async function findMembersByIds(
   if (memberIds.length === 0) return [];
 
   const inList = memberIds.map((id) => encodeURIComponent(id)).join(',');
-  const url = `${env.SUPABASE_URL}/rest/v1/members?id=in.(${inList})&select=id,full_name,zone,good_standing,active,approval_status,license_code_hash`;
+  const url = `${env.SUPABASE_URL}/rest/v1/members?id=in.(${inList})&select=id,full_name,zone,good_standing,active,license_code_hash`;
 
   const res = await fetch(url, { headers: supabaseHeaders(env) });
   if (!res.ok) {
@@ -71,7 +71,6 @@ export async function searchMembers(
     select: 'id,full_name,zone',
     active: 'eq.true',
     good_standing: 'eq.true',
-    approval_status: 'eq.approved',
     order: 'full_name.asc',
     limit: String(limit),
   });

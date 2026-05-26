@@ -31,7 +31,7 @@ authRoutes.post('/request-otp', async (c) => {
         error:
           'License code not found. New members may register at /register for ELECOM approval.',
       },
-      404,
+      400,
     );
   }
   const approval = member.approval_status ?? 'approved';

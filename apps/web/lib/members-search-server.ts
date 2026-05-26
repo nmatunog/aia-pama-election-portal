@@ -27,7 +27,6 @@ export async function searchMembersServer(options: {
     select: 'id,full_name,zone',
     active: 'eq.true',
     good_standing: 'eq.true',
-    approval_status: 'eq.approved',
     order: 'full_name.asc',
     limit: String(limit),
   });

@@ -14,7 +14,7 @@ export async function findMemberByLicenseHash(
   env: Env,
   licenseHash: string,
 ): Promise<MemberRow | null> {
-  const url = `${env.SUPABASE_URL}/rest/v1/members?license_code_hash=eq.${licenseHash}&select=id,full_name,zone,good_standing,active,approval_status&limit=1`;
+  const url = `${env.SUPABASE_URL}/rest/v1/members?license_code_hash=eq.${licenseHash}&select=id,full_name,zone,good_standing,active&limit=1`;
 
   const res = await fetch(url, { headers: supabaseHeaders(env) });
 
