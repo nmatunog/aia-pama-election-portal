@@ -7,6 +7,7 @@ export async function POST(request: Request) {
   const res = await adminWorkerFetch(
     `/admin/members/import-dev-template?perZone=${encodeURIComponent(perZone)}`,
     { method: 'POST' },
+    request,
   );
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });

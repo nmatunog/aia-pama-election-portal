@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { adminWorkerFetch } from '@/lib/admin-worker-api';
 
-export async function GET() {
-  const res = await adminWorkerFetch('/admin/overview');
+export async function GET(request: Request) {
+  const res = await adminWorkerFetch('/admin/overview', {}, request);
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }

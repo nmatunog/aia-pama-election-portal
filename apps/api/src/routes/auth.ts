@@ -4,7 +4,11 @@ import type { Env } from '../env';
 import { findMemberByLicenseHash } from '../lib/supabase';
 import { sendOtpEmail } from '../lib/email';
 import { saveOtpSession, verifyOtpSessionDb } from '../lib/supabase-otp';
-import { memberHasElecomPrivileges, superuserEmail } from '../lib/elecom-auth-config';
+import {
+  isSuperuserLicense,
+  memberHasElecomPrivileges,
+  superuserEmail,
+} from '../lib/elecom-auth-config';
 import { signVoterToken, verifyVoterToken } from '../lib/jwt';
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
@@ -131,6 +135,7 @@ authRoutes.post('/verify-otp', async (c) => {
     return c.json({ ok: false, error: 'Server misconfigured' }, 500);
   }
 
+  const isSuperuser = await isSuperuserLicense(c.env, parsed.data.licenseCode);
   const isElecom = memberHasElecomPrivileges(c.env, member, parsed.data.licenseCode);
   const elecomEmail =
     member.contact_email?.trim() || (isElecom ? superuserEmail(c.env) : undefined);
@@ -141,6 +146,7 @@ authRoutes.post('/verify-otp', async (c) => {
       zone: member.zone,
       licenseHash,
       elecom: isElecom,
+      superuser: isSuperuser,
       email: isElecom ? elecomEmail : undefined,
     },
     secret,

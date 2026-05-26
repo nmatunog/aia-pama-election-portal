@@ -2,6 +2,7 @@
 
 import { MEMBER_POSITIONS } from '@aia-pama/shared';
 import { useState } from 'react';
+import { adminFetch } from '@/lib/admin-fetch';
 import { inputField, primaryBtn, secondaryBtn } from '@/lib/layout-classes';
 
 type Props = {
@@ -36,7 +37,7 @@ export function ElecomMemberProfileEditor({
   async function save() {
     onBusyChange?.(true);
     onError?.('');
-    const res = await fetch('/api/admin/members', {
+    const res = await adminFetch('/api/admin/members', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

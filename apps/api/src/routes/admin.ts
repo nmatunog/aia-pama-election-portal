@@ -292,6 +292,13 @@ adminRoutes.patch('/members', async (c) => {
     return c.json({ ok: false, error: 'Invalid request' }, 400);
   }
 
+  if (parsed.data.isElecom !== undefined && !elecom.superuser) {
+    return c.json(
+      { ok: false, error: 'Only a superuser may grant or revoke ELECOM access' },
+      403,
+    );
+  }
+
   const result = await updateMember(c.env, parsed.data.memberId, {
     goodStanding: parsed.data.goodStanding,
     active: parsed.data.active,

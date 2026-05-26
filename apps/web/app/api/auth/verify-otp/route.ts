@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   const data = (await res.json()) as {
     ok: boolean;
     token?: string;
-    member?: { fullName: string; zone: string };
+    member?: { fullName: string; zone: string; isElecom?: boolean };
     error?: string;
   };
 
@@ -43,12 +43,13 @@ export async function POST(request: Request) {
     return NextResponse.json(data, { status: res.status });
   }
 
+  const isElecom = data.member?.isElecom === true;
   const response = NextResponse.json({ ok: true, member: data.member });
   response.cookies.set('aia_session', data.token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 15,
+    maxAge: isElecom ? 60 * 60 * 8 : 60 * 15,
     path: '/',
   });
 

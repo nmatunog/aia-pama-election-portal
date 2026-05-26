@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { getElecomSession } from '@/lib/admin-session';
 import { adminWorkerFetch } from '@/lib/admin-worker-api';
 import { pageTitle } from '@/lib/layout-classes';
 import {
@@ -14,6 +15,7 @@ type RosterStats = {
 };
 
 async function MemberRosterContent() {
+  const session = await getElecomSession();
   const res = await adminWorkerFetch('/admin/voters');
   const data = (await res.json()) as {
     ok: boolean;
@@ -31,6 +33,7 @@ async function MemberRosterContent() {
       initial={data.voters ?? []}
       initialZone="all"
       stats={data.stats ?? { total: 0, pending: 0, eligible: 0, voted: 0 }}
+      canGrantElecom={session?.isSuperuser === true}
     />
   );
 }
@@ -40,11 +43,10 @@ export default function ElecomMembersPage() {
     <>
       <h2 className={pageTitle}>Member roster</h2>
       <p className="mt-2 text-base text-[#4D4D4D]">
-        One place to approve new signups, set good standing and active status, edit
-        position and agency, and <strong>Grant ELECOM</strong> for committee admin access.
-        Promoted members sign in at /login with their license (same as members) and open
-        /admin. Pending applications are highlighted — use <strong>Approve signup</strong>{' '}
-        first.
+        One place to manage members: use <strong>Actions</strong> for Approved / Disapproved
+        on pending signups; superusers may <strong>Grant ELECOM</strong> or revoke it.
+        Edit position and agency inline. Promoted ELECOM members sign in at /login and
+        open /admin.
       </p>
       <div className="mt-6">
         <Suspense fallback={<p className="text-[#4D4D4D]">Loading roster…</p>}>

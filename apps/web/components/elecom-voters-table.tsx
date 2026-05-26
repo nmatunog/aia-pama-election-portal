@@ -5,7 +5,42 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { FormattedDateTime } from '@/components/formatted-datetime';
 import { ElecomMemberProfileEditor } from '@/components/elecom-member-profile-editor';
-import { primaryBtn, secondaryBtn } from '@/lib/layout-classes';
+import { adminFetch } from '@/lib/admin-fetch';
+import { inputField, primaryBtn } from '@/lib/layout-classes';
+
+type MemberAction =
+  | 'approved'
+  | 'disapproved'
+  | 'grant_elecom'
+  | 'revoke_elecom'
+  | 'delete';
+
+function memberActionOptions(
+  v: AdminVoterRow,
+  canGrantElecom: boolean,
+): { value: MemberAction; label: string }[] {
+  const options: { value: MemberAction; label: string }[] = [];
+  const pending = v.approvalStatus === 'pending_approval';
+  const approved = (v.approvalStatus ?? 'approved') === 'approved';
+
+  if (pending) {
+    options.push({ value: 'approved', label: 'Approved' });
+    options.push({ value: 'disapproved', label: 'Disapproved' });
+  }
+
+  if (canGrantElecom && approved) {
+    options.push({
+      value: v.isElecom ? 'revoke_elecom' : 'grant_elecom',
+      label: v.isElecom ? 'Revoke ELECOM' : 'Grant ELECOM',
+    });
+  }
+
+  if (!pending && !v.active && !v.hasVoted && !v.isElecom) {
+    options.push({ value: 'delete', label: 'Delete member' });
+  }
+
+  return options;
+}
 
 export type AdminVoterRow = {
   memberId: string;
@@ -36,9 +71,16 @@ type Props = {
   initial: AdminVoterRow[];
   initialZone: string;
   stats: RosterStats;
+  /** Superuser only — grant or revoke ELECOM admin on the roster */
+  canGrantElecom?: boolean;
 };
 
-export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
+export function ElecomVotersTable({
+  initial,
+  initialZone,
+  stats,
+  canGrantElecom = false,
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get('filter');
@@ -64,7 +106,7 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
 
   async function reload(z: string) {
     const qs = z && z !== 'all' ? `?zone=${encodeURIComponent(z)}` : '';
-    const res = await fetch(`/api/admin/voters${qs}`);
+    const res = await adminFetch(`/api/admin/voters${qs}`);
     const data = (await res.json()) as {
       ok: boolean;
       voters?: AdminVoterRow[];
@@ -80,7 +122,7 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
     if (!window.confirm('Permanently remove this member from the roster?')) return;
     setBusyId(memberId);
     setError(null);
-    const res = await fetch('/api/admin/members/delete', {
+    const res = await adminFetch('/api/admin/members/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memberId, confirm: true }),
@@ -98,7 +140,7 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
   async function reviewSignup(memberId: string, decision: 'approved' | 'rejected') {
     setBusyId(memberId);
     setError(null);
-    const res = await fetch('/api/admin/members/approve', {
+    const res = await adminFetch('/api/admin/members/approve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -129,7 +171,7 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
   ) {
     setBusyId(memberId);
     setError(null);
-    const res = await fetch('/api/admin/members', {
+    const res = await adminFetch('/api/admin/members', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ memberId, ...patch }),
@@ -142,6 +184,35 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
     }
     await reload(zone);
     router.refresh();
+  }
+
+  async function runMemberAction(memberId: string, action: MemberAction) {
+    switch (action) {
+      case 'approved':
+        await reviewSignup(memberId, 'approved');
+        break;
+      case 'disapproved':
+        await reviewSignup(memberId, 'rejected');
+        break;
+      case 'grant_elecom':
+        await updateMember(memberId, { isElecom: true });
+        break;
+      case 'revoke_elecom':
+        if (
+          !window.confirm(
+            'Remove ELECOM admin access? They must sign in again for changes to apply.',
+          )
+        ) {
+          return;
+        }
+        await updateMember(memberId, { isElecom: false });
+        break;
+      case 'delete':
+        await deleteMember(memberId);
+        break;
+      default:
+        break;
+    }
   }
 
   const statusTabs: { id: StatusFilter; label: string; count?: number }[] = [
@@ -221,7 +292,7 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
           >
             Pending signup
           </button>{' '}
-          filter and click <strong>Approve</strong>.
+          filter and choose <strong>Approved</strong> or <strong>Disapproved</strong> in Actions.
         </p>
       )}
 
@@ -340,58 +411,33 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
                       {v.hasVoted ? <FormattedDateTime iso={v.votedAt!} /> : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex min-w-[7rem] flex-col gap-2">
-                        {pending && (
-                          <>
-                            <button
-                              type="button"
-                              className={primaryBtn}
-                              disabled={busyId === v.memberId}
-                              onClick={() => reviewSignup(v.memberId, 'approved')}
-                            >
-                              Approve signup
-                            </button>
-                            <button
-                              type="button"
-                              className={secondaryBtn}
-                              disabled={busyId === v.memberId}
-                              onClick={() => reviewSignup(v.memberId, 'rejected')}
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {approved && (
-                          <button
-                            type="button"
-                            className={v.isElecom ? secondaryBtn : primaryBtn}
+                      {(() => {
+                        const actions = memberActionOptions(v, canGrantElecom);
+                        if (actions.length === 0) {
+                          return <span className="text-xs text-[#4D4D4D]">—</span>;
+                        }
+                        return (
+                          <select
+                            className={`${inputField} min-w-[10.5rem] py-2 text-sm`}
+                            defaultValue=""
                             disabled={busyId === v.memberId}
-                            onClick={() => {
-                              if (
-                                v.isElecom &&
-                                !window.confirm(
-                                  'Remove ELECOM admin access? They must sign in again for changes to apply.',
-                                )
-                              ) {
-                                return;
-                              }
-                              void updateMember(v.memberId, { isElecom: !v.isElecom });
+                            aria-label={`Actions for ${v.fullName}`}
+                            onChange={(e) => {
+                              const action = e.target.value as MemberAction;
+                              e.target.value = '';
+                              if (!action) return;
+                              void runMemberAction(v.memberId, action);
                             }}
                           >
-                            {v.isElecom ? 'Revoke ELECOM' : 'Grant ELECOM'}
-                          </button>
-                        )}
-                        {!pending && !v.active && !v.hasVoted && !v.isElecom && (
-                          <button
-                            type="button"
-                            className="text-sm font-semibold text-[#D41245] underline"
-                            disabled={busyId === v.memberId}
-                            onClick={() => deleteMember(v.memberId)}
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
+                            <option value="">Choose action…</option>
+                            {actions.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        );
+                      })()}
                     </td>
                   </tr>
                 );

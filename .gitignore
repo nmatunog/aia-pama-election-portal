@@ -16,6 +16,9 @@ dist/
 .env.*.local
 apps/api/.dev.vars
 
+# Vercel
+.vercel/
+
 # IDE
 .idea/
 .vscode/

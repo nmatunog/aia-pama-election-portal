@@ -84,7 +84,7 @@ export async function resolveElecomAccess(
   secret: string,
 ): Promise<ElecomClaims | null> {
   const dedicated = await verifyElecomToken(token, secret);
-  if (dedicated) return dedicated;
+  if (dedicated) return { ...dedicated, superuser: true };
 
   const voter = await verifyVoterToken(token, secret);
   if (!voter?.elecom) return null;
@@ -93,6 +93,7 @@ export async function resolveElecomAccess(
     sub: voter.sub,
     email: voter.email ?? superuserEmailFromClaims(voter),
     role: 'elecom',
+    superuser: voter.superuser === true,
   };
 }
 

@@ -9,6 +9,7 @@ async function signOut() {
   const { cookies } = await import('next/headers');
   const store = await cookies();
   store.delete('aia_admin_session');
+  store.delete('aia_session');
   redirect('/admin/login');
 }
 

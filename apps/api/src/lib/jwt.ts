@@ -5,8 +5,10 @@ export type VoterClaims = {
   name: string;
   zone: string;
   licenseHash: string;
-  /** Member session with ELECOM superuser privileges */
+  /** Member session with ELECOM admin access */
   elecom?: boolean;
+  /** Env superuser license — may grant ELECOM to others */
+  superuser?: boolean;
   email?: string;
 };
 
@@ -14,6 +16,7 @@ export type ElecomClaims = {
   sub: string;
   email: string;
   role: 'elecom';
+  superuser?: boolean;
 };
 
 function secretKey(secret: string) {
@@ -31,13 +34,14 @@ export async function signVoterToken(
   };
   if (claims.elecom) {
     payload.elecom = true;
+    if (claims.superuser) payload.superuser = true;
     if (claims.email) payload.email = claims.email;
   }
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(claims.sub)
     .setIssuedAt()
-    .setExpirationTime('15m')
+    .setExpirationTime(claims.elecom ? '8h' : '15m')
     .sign(secretKey(secret));
 }
 

@@ -3,11 +3,15 @@ import { adminWorkerFetch } from '@/lib/admin-worker-api';
 
 export async function POST(request: Request) {
   const body = await request.text();
-  const res = await adminWorkerFetch('/admin/members/approve', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  });
+  const res = await adminWorkerFetch(
+    '/admin/members/approve',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    },
+    request,
+  );
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }
