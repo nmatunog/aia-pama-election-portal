@@ -43,10 +43,10 @@ export default function ElecomMembersPage() {
     <>
       <h2 className={pageTitle}>Member roster</h2>
       <p className="mt-2 text-base text-[#4D4D4D]">
-        One place to manage members: use <strong>Actions</strong> for Approved / Disapproved
-        on pending signups; superusers may <strong>Grant ELECOM</strong> or revoke it.
-        Edit position and agency inline. Promoted ELECOM members sign in at /login and
-        open /admin.
+        One place to manage members: for pending signups, set <strong>Good standing</strong>{' '}
+        and <strong>Active</strong> to Yes — you will be asked to approve when both are Yes.
+        Use <strong>Disapproved</strong> in Actions to reject. Superusers may{' '}
+        <strong>Grant ELECOM</strong> or revoke it.
       </p>
       <div className="mt-6">
         <Suspense fallback={<p className="text-[#4D4D4D]">Loading roster…</p>}>

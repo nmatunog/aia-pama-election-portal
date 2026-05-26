@@ -5,11 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { FormattedDateTime } from '@/components/formatted-datetime';
 import { ElecomMemberProfileEditor } from '@/components/elecom-member-profile-editor';
+import {
+  MemberActionsKebab,
+  type MemberKebabAction,
+} from '@/components/member-actions-kebab';
 import { adminFetch } from '@/lib/admin-fetch';
 import { inputField, primaryBtn } from '@/lib/layout-classes';
 
 type MemberAction =
-  | 'approved'
   | 'disapproved'
   | 'grant_elecom'
   | 'revoke_elecom'
@@ -18,26 +21,25 @@ type MemberAction =
 function memberActionOptions(
   v: AdminVoterRow,
   canGrantElecom: boolean,
-): { value: MemberAction; label: string }[] {
-  const options: { value: MemberAction; label: string }[] = [];
+): MemberKebabAction[] {
+  const options: MemberKebabAction[] = [];
   const pending = v.approvalStatus === 'pending_approval';
   const approved = (v.approvalStatus ?? 'approved') === 'approved';
 
   if (pending) {
-    options.push({ value: 'approved', label: 'Approved' });
-    options.push({ value: 'disapproved', label: 'Disapproved' });
-    options.push({ value: 'delete', label: 'Delete application' });
+    options.push({ id: 'disapproved', label: 'Disapproved', destructive: true });
+    options.push({ id: 'delete', label: 'Delete application', destructive: true });
   }
 
   if (canGrantElecom && approved) {
     options.push({
-      value: v.isElecom ? 'revoke_elecom' : 'grant_elecom',
+      id: v.isElecom ? 'revoke_elecom' : 'grant_elecom',
       label: v.isElecom ? 'Revoke ELECOM' : 'Grant ELECOM',
     });
   }
 
   if (!pending && !v.active && !v.hasVoted && !v.isElecom) {
-    options.push({ value: 'delete', label: 'Delete member' });
+    options.push({ id: 'delete', label: 'Delete member', destructive: true });
   }
 
   return options;
@@ -160,7 +162,7 @@ export function ElecomVotersTable({
     router.refresh();
   }
 
-  async function updateMember(
+  async function patchMember(
     memberId: string,
     patch: {
       goodStanding?: boolean;
@@ -169,7 +171,7 @@ export function ElecomVotersTable({
       agencyName?: string;
       isElecom?: boolean;
     },
-  ) {
+  ): Promise<boolean> {
     setBusyId(memberId);
     setError(null);
     const res = await adminFetch('/api/admin/members', {
@@ -181,17 +183,55 @@ export function ElecomVotersTable({
     setBusyId(null);
     if (!data.ok) {
       setError(data.error ?? 'Update failed');
-      return;
+      return false;
     }
+    return true;
+  }
+
+  async function updateMember(
+    memberId: string,
+    patch: {
+      goodStanding?: boolean;
+      active?: boolean;
+      position?: string;
+      agencyName?: string;
+      isElecom?: boolean;
+    },
+  ) {
+    const ok = await patchMember(memberId, patch);
+    if (!ok) return;
+    await reload(zone);
+    router.refresh();
+  }
+
+  async function toggleEligibility(v: AdminVoterRow, field: 'goodStanding' | 'active') {
+    const nextGoodStanding =
+      field === 'goodStanding' ? !v.goodStanding : v.goodStanding;
+    const nextActive = field === 'active' ? !v.active : v.active;
+
+    const ok = await patchMember(v.memberId, {
+      goodStanding: nextGoodStanding,
+      active: nextActive,
+    });
+    if (!ok) return;
+
+    if (
+      v.approvalStatus === 'pending_approval' &&
+      nextGoodStanding &&
+      nextActive &&
+      window.confirm(
+        `Good standing and active are both Yes for ${v.fullName}. Approve this membership? They may sign in after approval.`,
+      )
+    ) {
+      await reviewSignup(v.memberId, 'approved');
+    }
+
     await reload(zone);
     router.refresh();
   }
 
   async function runMemberAction(memberId: string, action: MemberAction) {
     switch (action) {
-      case 'approved':
-        await reviewSignup(memberId, 'approved');
-        break;
       case 'disapproved':
         await reviewSignup(memberId, 'rejected');
         break;
@@ -293,7 +333,8 @@ export function ElecomVotersTable({
           >
             Pending signup
           </button>{' '}
-          filter and choose <strong>Approved</strong> or <strong>Disapproved</strong> in Actions.
+          filter, set <strong>Good standing</strong> and <strong>Active</strong> to Yes, then
+          confirm approval (or choose <strong>Disapproved</strong> in Actions).
         </p>
       )}
 
@@ -327,6 +368,8 @@ export function ElecomVotersTable({
               {filteredRows.map((v) => {
                 const pending = v.approvalStatus === 'pending_approval';
                 const approved = (v.approvalStatus ?? 'approved') === 'approved';
+                const rejected = v.approvalStatus === 'rejected';
+                const canToggleFlags = !rejected && (pending || approved);
                 return (
                   <tr
                     key={v.memberId}
@@ -379,66 +422,49 @@ export function ElecomVotersTable({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {pending ? (
-                        <span className="text-xs text-[#4D4D4D]">After approve</span>
-                      ) : (
+                      {canToggleFlags ? (
                         <button
                           type="button"
                           className={primaryBtn}
-                          disabled={busyId === v.memberId || !approved}
-                          onClick={() =>
-                            updateMember(v.memberId, { goodStanding: !v.goodStanding })
-                          }
+                          disabled={busyId === v.memberId}
+                          onClick={() => void toggleEligibility(v, 'goodStanding')}
                         >
                           {v.goodStanding ? 'Yes' : 'No'}
                         </button>
+                      ) : (
+                        <span className="text-xs text-[#4D4D4D]">
+                          {v.goodStanding ? 'Yes' : 'No'}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {pending ? (
-                        <span className="text-xs text-[#4D4D4D]">After approve</span>
-                      ) : (
+                      {canToggleFlags ? (
                         <button
                           type="button"
                           className={primaryBtn}
-                          disabled={busyId === v.memberId || !approved}
-                          onClick={() => updateMember(v.memberId, { active: !v.active })}
+                          disabled={busyId === v.memberId}
+                          onClick={() => void toggleEligibility(v, 'active')}
                         >
                           {v.active ? 'Yes' : 'No'}
                         </button>
+                      ) : (
+                        <span className="text-xs text-[#4D4D4D]">
+                          {v.active ? 'Yes' : 'No'}
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-[#4D4D4D]">
                       {v.hasVoted ? <FormattedDateTime iso={v.votedAt!} /> : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      {(() => {
-                        const actions = memberActionOptions(v, canGrantElecom);
-                        if (actions.length === 0) {
-                          return <span className="text-xs text-[#4D4D4D]">—</span>;
+                      <MemberActionsKebab
+                        memberName={v.fullName}
+                        actions={memberActionOptions(v, canGrantElecom)}
+                        disabled={busyId === v.memberId}
+                        onSelect={(actionId) =>
+                          void runMemberAction(v.memberId, actionId as MemberAction)
                         }
-                        return (
-                          <select
-                            className={`${inputField} min-w-[10.5rem] py-2 text-sm`}
-                            defaultValue=""
-                            disabled={busyId === v.memberId}
-                            aria-label={`Actions for ${v.fullName}`}
-                            onChange={(e) => {
-                              const action = e.target.value as MemberAction;
-                              e.target.value = '';
-                              if (!action) return;
-                              void runMemberAction(v.memberId, action);
-                            }}
-                          >
-                            <option value="">Choose action…</option>
-                            {actions.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </select>
-                        );
-                      })()}
+                      />
                     </td>
                   </tr>
                 );

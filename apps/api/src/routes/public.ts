@@ -31,8 +31,9 @@ publicRoutes.post('/member-signup', async (c) => {
 
   return c.json({
     ok: true,
-    message:
-      'Application received. You may log in after ELECOM approves your membership (watch your email).',
+    message: result.updated
+      ? 'Your pending application was updated. You may log in after ELECOM approves your membership.'
+      : 'Application received. You may log in after ELECOM approves your membership (watch your email).',
   });
 });
 

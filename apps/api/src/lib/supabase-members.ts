@@ -149,7 +149,7 @@ export async function createMemberSignup(
     zone: string;
     contactEmail: string;
   },
-): Promise<{ ok: true; memberId: string } | { error: string }> {
+): Promise<{ ok: true; memberId: string; updated?: boolean } | { error: string }> {
   const licenseHash = await hashLicenseCode(input.licenseCode);
 
   const existing = await fetch(
@@ -161,7 +161,27 @@ export async function createMemberSignup(
     const row = rows[0];
     if (row) {
       if (row.approval_status === 'pending_approval') {
-        return { error: 'A signup with this license code is already pending ELECOM review.' };
+        const patch = await fetch(`${env.SUPABASE_URL}/rest/v1/members?id=eq.${row.id}`, {
+          method: 'PATCH',
+          headers: supabaseHeaders(env, { Prefer: 'return=minimal' }),
+          body: JSON.stringify({
+            full_name: input.fullName,
+            position: input.position,
+            agency_name: input.agencyName,
+            zone: input.zone,
+            contact_email: input.contactEmail,
+            approval_status: 'pending_approval',
+            active: false,
+            good_standing: false,
+            rejection_reason: null,
+            registered_at: new Date().toISOString(),
+          }),
+        });
+        if (!patch.ok) {
+          const text = await patch.text();
+          return { error: signupErrorFromSupabase(patch.status, text) };
+        }
+        return { ok: true, memberId: row.id, updated: true };
       }
       if (row.approval_status === 'approved') {
         return { error: 'This license code is already registered. Use Member Login instead.' };
@@ -234,12 +254,19 @@ export async function reviewMemberSignup(
     return { error: 'Member is not pending approval' };
   }
 
+  if (decision === 'approved') {
+    if (!row.good_standing || !row.active) {
+      return {
+        error:
+          'Set good standing and active to Yes before approving this membership.',
+      };
+    }
+  }
+
   const body =
     decision === 'approved'
       ? {
           approval_status: 'approved',
-          active: true,
-          good_standing: true,
           rejection_reason: null,
         }
       : {
