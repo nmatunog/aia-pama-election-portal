@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { PHASE_LABELS } from '@aia-pama/shared';
 import { adminWorkerFetch } from '@/lib/admin-worker-api';
 import { pageTitle } from '@/lib/layout-classes';
+import { ElecomElectionAdminPanel } from '@/components/elecom-election-admin-panel';
 import { ElecomCertifyPanel } from '@/components/elecom-certify-panel';
 import { ElecomPhaseControl } from '@/components/elecom-phase-control';
 import {
@@ -69,6 +70,12 @@ export default async function ElecomAdminPage() {
       <p className="mt-2 text-base text-[#4D4D4D]">
         Current phase: <span className="font-semibold text-[#1C1C1C]">{phaseLabel}</span>
       </p>
+
+      <ElecomElectionAdminPanel
+        electionId={data.election.id}
+        cycleYear={data.election.cycle_year}
+        phase={data.election.phase}
+      />
 
       <ElecomCertifyPanel
         electionId={data.election.id}

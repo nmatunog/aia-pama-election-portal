@@ -12,6 +12,8 @@ export type AdminVoterRow = {
   zone: string;
   goodStanding: boolean;
   active: boolean;
+  approvalStatus?: string;
+  contactEmail?: string | null;
   hasVoted: boolean;
   votedAt: string | null;
 };
@@ -42,6 +44,25 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
       if (data.voters) setRows(data.voters);
       if (data.stats) setLocalStats(data.stats);
     }
+  }
+
+  async function deleteMember(memberId: string) {
+    if (!window.confirm('Permanently remove this member from the roster?')) return;
+    setBusyId(memberId);
+    setError(null);
+    const res = await fetch('/api/admin/members/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId, confirm: true }),
+    });
+    const data = (await res.json()) as { ok: boolean; error?: string };
+    setBusyId(null);
+    if (!data.ok) {
+      setError(data.error ?? 'Delete failed');
+      return;
+    }
+    await reload(zone);
+    router.refresh();
   }
 
   async function updateMember(
@@ -115,7 +136,9 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
               <th className="px-4 py-3 font-semibold">Zone</th>
               <th className="px-4 py-3 font-semibold">Good standing</th>
               <th className="px-4 py-3 font-semibold">Active</th>
+              <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Voted</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -145,10 +168,25 @@ export function ElecomVotersTable({ initial, initialZone, stats }: Props) {
                     {v.active ? 'Yes' : 'No'}
                   </button>
                 </td>
+                <td className="px-4 py-3 text-xs capitalize text-[#4D4D4D]">
+                  {v.approvalStatus ?? 'approved'}
+                </td>
                 <td className="px-4 py-3 text-[#4D4D4D]">
                   {v.hasVoted
                     ? <FormattedDateTime iso={v.votedAt!} />
                     : '—'}
+                </td>
+                <td className="px-4 py-3">
+                  {!v.active && !v.hasVoted && (
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-[#D41245] underline"
+                      disabled={busyId === v.memberId}
+                      onClick={() => deleteMember(v.memberId)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

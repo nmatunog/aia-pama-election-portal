@@ -1,10 +1,38 @@
 import { Hono } from 'hono';
+import { memberSignupSchema } from '@aia-pama/shared';
 import type { Env } from '../env';
 import { getCurrentElection } from '../lib/supabase-election';
+import { createMemberSignup } from '../lib/supabase-members';
 import { loadPublicResults } from '../lib/supabase-public';
 import { supabaseHeaders } from '../lib/supabase-headers';
 
 export const publicRoutes = new Hono<{ Bindings: Env }>();
+
+/** New member registration — always open; ELECOM must approve before login. */
+publicRoutes.post('/member-signup', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  const parsed = memberSignupSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ ok: false, error: 'Invalid request', details: parsed.error.flatten() }, 400);
+  }
+
+  const result = await createMemberSignup(c.env, {
+    licenseCode: parsed.data.licenseCode,
+    fullName: parsed.data.fullName,
+    zone: parsed.data.zone,
+    contactEmail: parsed.data.contactEmail,
+  });
+
+  if ('error' in result) {
+    return c.json({ ok: false, error: result.error }, 400);
+  }
+
+  return c.json({
+    ok: true,
+    message:
+      'Application received. You may log in after ELECOM approves your membership (watch your email).',
+  });
+});
 
 type PublicCandidateRow = {
   id: string;

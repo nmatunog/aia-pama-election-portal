@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import {
+  buildDefaultDevRoster,
   candidateReviewSchema,
   candidateStatusUpdateSchema,
   electionCertifySchema,
@@ -7,7 +8,11 @@ import {
   elecomLoginSchema,
   assertCanCertifyElection,
   type ElectionPhase,
+  memberApprovalSchema,
+  memberDeleteSchema,
   memberUpdateSchema,
+  newElectionCycleSchema,
+  rosterImportSchema,
 } from '@aia-pama/shared';
 import type { Env } from '../env';
 import { verifyElecomCredentials } from '../lib/elecom-auth-config';
@@ -28,6 +33,16 @@ import {
 import { certifyElectionRecord } from '../lib/supabase-election';
 import { getCertifiedElectionResults } from '../lib/supabase-certified';
 import { loadPublicResults } from '../lib/supabase-public';
+import {
+  deleteMemberRecord,
+  importMemberRoster,
+  listMembers,
+  reviewMemberSignup,
+} from '../lib/supabase-members';
+import {
+  resetCurrentElection,
+  startNewElectionCycle,
+} from '../lib/supabase-election-cycle';
 import { requireElecom, type ElecomVariables } from '../middleware/elecom-auth';
 
 export const adminRoutes = new Hono<{ Bindings: Env; Variables: ElecomVariables }>();
@@ -362,4 +377,208 @@ adminRoutes.post('/candidates/reject', async (c) => {
   });
 
   return c.json({ ok: true, status: 'rejected', message: 'Candidate not approved.' });
+});
+
+adminRoutes.get('/members/applications', async (c) => {
+  const pending = await listMembers(c.env, { approvalStatus: 'pending_approval' });
+  return c.json({
+    ok: true,
+    applications: pending.map((m) => ({
+      memberId: m.id,
+      fullName: m.full_name,
+      zone: m.zone,
+      contactEmail: m.contact_email,
+      registeredAt: m.registered_at,
+    })),
+  });
+});
+
+adminRoutes.post('/members/approve', async (c) => {
+  const elecom = c.get('elecom');
+  const body = await c.req.json().catch(() => null);
+  const parsed = memberApprovalSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ ok: false, error: 'Invalid request' }, 400);
+  }
+
+  const result = await reviewMemberSignup(
+    c.env,
+    parsed.data.memberId,
+    parsed.data.decision,
+    parsed.data.rejectionReason,
+  );
+  if ('error' in result) {
+    return c.json({ ok: false, error: result.error }, 400);
+  }
+
+  await appendAuditLog(c.env, {
+    actorType: 'elecom',
+    actorId: elecom.email,
+    action: `member.${parsed.data.decision}`,
+    entity: 'member',
+    entityId: parsed.data.memberId,
+    payload: { rejectionReason: parsed.data.rejectionReason ?? null },
+  });
+
+  return c.json({
+    ok: true,
+    message:
+      parsed.data.decision === 'approved'
+        ? 'Member approved and may now log in.'
+        : 'Member application rejected.',
+  });
+});
+
+adminRoutes.post('/members/delete', async (c) => {
+  const elecom = c.get('elecom');
+  const body = await c.req.json().catch(() => null);
+  const parsed = memberDeleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ ok: false, error: 'Invalid request' }, 400);
+  }
+
+  const result = await deleteMemberRecord(c.env, parsed.data.memberId);
+  if ('error' in result) {
+    return c.json({ ok: false, error: result.error }, 400);
+  }
+
+  await appendAuditLog(c.env, {
+    actorType: 'elecom',
+    actorId: elecom.email,
+    action: 'member.delete',
+    entity: 'member',
+    entityId: parsed.data.memberId,
+    payload: {},
+  });
+
+  return c.json({ ok: true, message: 'Member removed from roster.' });
+});
+
+adminRoutes.post('/members/import-roster', async (c) => {
+  const elecom = c.get('elecom');
+  const body = await c.req.json().catch(() => null);
+  const parsed = rosterImportSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ ok: false, error: 'Invalid request' }, 400);
+  }
+
+  const result = await importMemberRoster(
+    c.env,
+    parsed.data.members.map((m) => ({
+      licenseCode: m.licenseCode,
+      fullName: m.fullName,
+      zone: m.zone,
+      goodStanding: m.goodStanding,
+      active: m.active,
+    })),
+    { deactivateOthers: parsed.data.deactivateOthers ?? false },
+  );
+  if ('error' in result) {
+    return c.json({ ok: false, error: result.error }, 400);
+  }
+
+  await appendAuditLog(c.env, {
+    actorType: 'elecom',
+    actorId: elecom.email,
+    action: 'member.import_roster',
+    entity: 'members',
+    entityId: 'bulk',
+    payload: { count: result.upserted, deactivated: result.deactivated },
+  });
+
+  return c.json({
+    ok: true,
+    upserted: result.upserted,
+    deactivated: result.deactivated,
+    message: `Imported ${result.upserted} member(s).`,
+  });
+});
+
+adminRoutes.post('/members/import-dev-template', async (c) => {
+  const elecom = c.get('elecom');
+  const perZone = Number(c.req.query('perZone') ?? 15);
+  const roster = buildDefaultDevRoster(perZone);
+  const result = await importMemberRoster(c.env, roster, { deactivateOthers: false });
+  if ('error' in result) {
+    return c.json({ ok: false, error: result.error }, 500);
+  }
+
+  await appendAuditLog(c.env, {
+    actorType: 'elecom',
+    actorId: elecom.email,
+    action: 'member.import_dev_template',
+    entity: 'members',
+    entityId: 'template',
+    payload: { count: result.upserted, perZone },
+  });
+
+  return c.json({
+    ok: true,
+    upserted: result.upserted,
+    message: `Imported ${result.upserted} members from dev template.`,
+  });
+});
+
+adminRoutes.post('/election/new-cycle', async (c) => {
+  const elecom = c.get('elecom');
+  const body = await c.req.json().catch(() => null);
+  const parsed = newElectionCycleSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ ok: false, error: 'Invalid request' }, 400);
+  }
+
+  const result = await startNewElectionCycle(c.env, {
+    cycleYear: parsed.data.cycleYear,
+    force: parsed.data.force,
+  });
+  if ('error' in result) {
+    return c.json({ ok: false, error: result.error }, 400);
+  }
+
+  await appendAuditLog(c.env, {
+    actorType: 'elecom',
+    actorId: elecom.email,
+    action: 'election.new_cycle',
+    entity: 'election',
+    entityId: result.electionId,
+    payload: {
+      cycleYear: result.cycleYear,
+      archivedElectionId: result.archivedElectionId ?? null,
+    },
+  });
+
+  return c.json({
+    ok: true,
+    electionId: result.electionId,
+    cycleYear: result.cycleYear,
+    message: `New ${result.cycleYear} election cycle started in nomination phase.`,
+  });
+});
+
+adminRoutes.post('/election/reset-current', async (c) => {
+  const elecom = c.get('elecom');
+  const body = await c.req.json().catch(() => null);
+  const confirm = body?.confirm === true;
+  if (!confirm) {
+    return c.json({ ok: false, error: 'confirm: true required' }, 400);
+  }
+
+  const result = await resetCurrentElection(c.env);
+  if ('error' in result) {
+    return c.json({ ok: false, error: result.error }, 400);
+  }
+
+  await appendAuditLog(c.env, {
+    actorType: 'elecom',
+    actorId: elecom.email,
+    action: 'election.reset_current',
+    entity: 'election',
+    entityId: 'current',
+    payload: {},
+  });
+
+  return c.json({
+    ok: true,
+    message: 'Current election cleared and reset to nomination phase.',
+  });
 });

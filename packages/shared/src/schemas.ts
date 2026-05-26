@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ELECTION_PHASES } from './constants';
+import { ELECTION_PHASES, ZONES } from './constants';
 
 export const validateMemberSchema = z.object({
   licenseCode: z
@@ -113,6 +113,44 @@ export const memberUpdateSchema = z.object({
   active: z.boolean().optional(),
 });
 
+export const memberSignupSchema = z.object({
+  licenseCode: z.string().min(1).max(50).trim(),
+  fullName: z.string().min(2).max(200).trim(),
+  zone: z.enum(ZONES),
+  contactEmail: z.string().email().max(255),
+});
+
+export const memberApprovalSchema = z.object({
+  memberId: z.string().uuid(),
+  decision: z.enum(['approved', 'rejected']),
+  rejectionReason: z.string().max(500).optional(),
+});
+
+export const memberDeleteSchema = z.object({
+  memberId: z.string().uuid(),
+  confirm: z.literal(true),
+});
+
+export const rosterImportRowSchema = z.object({
+  licenseCode: z.string().min(1).max(50).trim(),
+  fullName: z.string().min(2).max(200).trim(),
+  zone: z.enum(ZONES),
+  goodStanding: z.boolean().optional(),
+  active: z.boolean().optional(),
+});
+
+export const rosterImportSchema = z.object({
+  confirm: z.literal(true),
+  members: z.array(rosterImportRowSchema).min(1).max(5000),
+  deactivateOthers: z.boolean().optional(),
+});
+
+export const newElectionCycleSchema = z.object({
+  confirm: z.literal(true),
+  cycleYear: z.number().int().min(2020).max(2100).optional(),
+  force: z.boolean().optional(),
+});
+
 /** @deprecated Use validateMemberSchema + sendOtpSchema */
 export const requestOtpSchema = validateMemberSchema;
 
@@ -129,3 +167,7 @@ export type ElectionPhaseUpdateInput = z.infer<typeof electionPhaseUpdateSchema>
 export type ElectionCertifyInput = z.infer<typeof electionCertifySchema>;
 export type CandidateStatusUpdateInput = z.infer<typeof candidateStatusUpdateSchema>;
 export type MemberUpdateInput = z.infer<typeof memberUpdateSchema>;
+export type MemberSignupInput = z.infer<typeof memberSignupSchema>;
+export type MemberApprovalInput = z.infer<typeof memberApprovalSchema>;
+export type RosterImportInput = z.infer<typeof rosterImportSchema>;
+export type NewElectionCycleInput = z.infer<typeof newElectionCycleSchema>;

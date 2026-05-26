@@ -25,7 +25,27 @@ authRoutes.post('/request-otp', async (c) => {
   const member = await findMemberByLicenseHash(c.env, licenseHash);
 
   if (!member) {
-    return c.json({ ok: false, error: 'License code not found in roster' }, 404);
+    return c.json(
+      {
+        ok: false,
+        error:
+          'License code not found. New members may register at /register for ELECOM approval.',
+      },
+      404,
+    );
+  }
+  const approval = member.approval_status ?? 'approved';
+  if (approval === 'pending_approval') {
+    return c.json(
+      {
+        ok: false,
+        error: 'Your membership signup is pending ELECOM approval.',
+      },
+      403,
+    );
+  }
+  if (approval === 'rejected') {
+    return c.json({ ok: false, error: 'Membership application was not approved.' }, 403);
   }
   if (!member.good_standing || !member.active) {
     return c.json({ ok: false, error: 'Member is not eligible to participate' }, 403);

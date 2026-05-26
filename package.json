@@ -16,6 +16,8 @@
     "seed:members": "node scripts/seed-members.mjs --write --csv --apply",
     "seed:election": "node scripts/seed-election.mjs",
     "seed:mock-results": "node scripts/seed-mock-results.mjs --reset",
+    "reset:election": "node scripts/reset-election-data.mjs",
+    "reset:members": "node scripts/reset-members-keep-superuser.mjs",
     "save:push": "bash scripts/save-and-push.sh",
     "test:phase3": "USE_WORKER=1 node scripts/test-phase3.mjs",
     "test:phase4": "node scripts/test-phase4.mjs",

@@ -61,6 +61,13 @@ export default async function HomePage() {
             enabled
           />
           <DashboardTile
+            icon="profile"
+            title="Register"
+            description="Apply for membership — ELECOM approval required before login."
+            href="/register"
+            enabled
+          />
+          <DashboardTile
             icon="admin"
             title="ELECOM Admin"
             description="Election committee administration portal."

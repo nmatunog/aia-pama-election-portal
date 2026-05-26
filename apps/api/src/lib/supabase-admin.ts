@@ -49,6 +49,8 @@ export type AdminVoter = {
   zone: string;
   goodStanding: boolean;
   active: boolean;
+  approvalStatus: string;
+  contactEmail: string | null;
   hasVoted: boolean;
   votedAt: string | null;
 };
@@ -227,7 +229,7 @@ export async function listQualifiedVoters(
 ): Promise<{ voters: AdminVoter[]; stats: { total: number; eligible: number; voted: number } }> {
   let membersUrl =
     `${env.SUPABASE_URL}/rest/v1/members?` +
-    `select=id,full_name,zone,good_standing,active,license_code_hash` +
+    `select=id,full_name,zone,good_standing,active,approval_status,contact_email,license_code_hash` +
     `&order=full_name.asc`;
 
   if (zone && zone !== 'all') {
@@ -252,6 +254,8 @@ export async function listQualifiedVoters(
     zone: string;
     good_standing: boolean;
     active: boolean;
+    approval_status: string;
+    contact_email: string | null;
     license_code_hash: string;
   }>;
 
@@ -269,12 +273,16 @@ export async function listQualifiedVoters(
       zone: m.zone,
       goodStanding: m.good_standing,
       active: m.active,
+      approvalStatus: m.approval_status ?? 'approved',
+      contactEmail: m.contact_email,
       hasVoted: votedAt !== null,
       votedAt,
     };
   });
 
-  const eligible = voters.filter((v) => v.goodStanding && v.active).length;
+  const eligible = voters.filter(
+    (v) => v.approvalStatus === 'approved' && v.goodStanding && v.active,
+  ).length;
   const voted = voters.filter((v) => v.hasVoted).length;
 
   return {

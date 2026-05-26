@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { searchMembersServer } from '@/lib/members-search-server';
 import { getSession } from '@/lib/session';
+import { workerFetch } from '@/lib/worker-api';
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -13,7 +13,6 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type') ?? 'zonal';
-  const q = searchParams.get('q') ?? '';
   const zoneParam = searchParams.get('zone');
 
   if (type === 'zonal' && zoneParam && zoneParam !== session.zone) {
@@ -23,16 +22,27 @@ export async function GET(request: Request) {
     );
   }
 
-  const zone = type === 'zonal' ? session.zone : zoneParam || undefined;
+  const qs = new URLSearchParams();
+  qs.set('type', type);
+  const q = searchParams.get('q');
+  if (q) qs.set('q', q);
+  if (zoneParam) qs.set('zone', zoneParam);
 
   try {
-    const members = await searchMembersServer({
-      zone: zone || undefined,
-      query: q,
-      limit: 25,
-    });
+    const res = await workerFetch(`/nominations/members/search?${qs.toString()}`, {}, request);
+    const data = (await res.json()) as { ok?: boolean; members?: unknown[]; error?: string };
 
-    return NextResponse.json({ ok: true, members });
+    if (!res.ok) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: data.error ?? 'Could not load member roster.',
+        },
+        { status: res.status },
+      );
+    }
+
+    return NextResponse.json(data);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Member search failed';
     console.error('members/search:', message);
@@ -40,9 +50,9 @@ export async function GET(request: Request) {
       {
         ok: false,
         error:
-          'Server cannot load the member roster. Restart npm run dev after updating apps/web/.env.local.',
+          'Could not reach the election API. Check NEXT_PUBLIC_API_URL on Vercel (or .env.local locally).',
       },
-      { status: 500 },
+      { status: 502 },
     );
   }
 }
