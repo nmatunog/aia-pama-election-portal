@@ -51,8 +51,33 @@ authRoutes.post('/request-otp', async (c) => {
   if (approval === 'rejected') {
     return c.json({ ok: false, error: 'Membership application was not approved.' }, 403);
   }
-  if (!member.good_standing || !member.active) {
-    return c.json({ ok: false, error: 'Member is not eligible to participate' }, 403);
+  if (!member.active && !member.good_standing) {
+    return c.json(
+      {
+        ok: false,
+        error:
+          'Your membership is on file but not yet active. If ELECOM recently approved you, ask them to confirm good standing and active status.',
+      },
+      403,
+    );
+  }
+  if (!member.active) {
+    return c.json(
+      {
+        ok: false,
+        error: 'Your membership account is inactive. Contact ELECOM for assistance.',
+      },
+      403,
+    );
+  }
+  if (!member.good_standing) {
+    return c.json(
+      {
+        ok: false,
+        error: 'Your membership is not in good standing. Contact ELECOM for assistance.',
+      },
+      403,
+    );
   }
 
   const sessionId = crypto.randomUUID();
