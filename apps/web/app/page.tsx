@@ -1,90 +1,77 @@
 import Link from 'next/link';
-import {
-  getPhaseAccess,
-  PHASE_BANNER_MESSAGES,
-  NOMINATE_DISABLED_MESSAGE,
-  VOTE_DISABLED_MESSAGE,
-} from '@aia-pama/shared';
-import { PhaseBanner, Button } from '@aia-pama/ui';
-import { getCurrentElectionPhase } from '@/lib/election-status';
-import { DashboardTile } from '@/components/dashboard-tile';
+import { redirect } from 'next/navigation';
+import { PHASE_BANNER_MESSAGES } from '@aia-pama/shared';
+import { PhaseBanner } from '@aia-pama/ui';
+import { LandingPathCard } from '@/components/landing-path-card';
 import { SiteHeader } from '@/components/site-header';
-import { mainWide, pageShell, tileGrid } from '@/lib/layout-classes';
+import { getCurrentElectionPhase } from '@/lib/election-status';
+import { getSession } from '@/lib/session';
+import { mainWide, pageShell } from '@/lib/layout-classes';
 
 export default async function HomePage() {
+  const session = await getSession();
+  if (session) redirect('/dashboard');
+
   const phase = await getCurrentElectionPhase();
-  const access = getPhaseAccess(phase);
   const bannerMessage =
     PHASE_BANNER_MESSAGES[phase] ?? PHASE_BANNER_MESSAGES.nomination;
 
   return (
     <div className={pageShell}>
-      <SiteHeader
-        title="AIA-PAMA Online Election Portal"
-        rightLink={{ href: '/login', label: 'Member Login' }}
-      />
+      <SiteHeader title="AIA-PAMA Online Election Portal" />
 
       <main className={mainWide}>
         <PhaseBanner phase={phase} message={bannerMessage} />
 
-        <section className="mt-6 sm:mt-8 md:mt-10">
-          <p className="text-base text-[#4D4D4D] sm:text-lg">
+        <section className="mt-6 text-center sm:mt-8 md:mt-10">
+          <h2 className="text-xl font-bold text-[#1C1C1C] sm:text-2xl md:text-3xl">
+            Welcome to the election portal
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-base text-[#4D4D4D] sm:text-lg">
             Secure, transparent elections governed by the AIA-PAMA Election Code.
-            Verify your membership, nominate candidates, and cast your official ballot.
+            Choose how you would like to get started.
           </p>
         </section>
 
-        <section className={`mt-6 sm:mt-8 md:mt-10 ${tileGrid}`}>
-          <DashboardTile
-            icon="nominate"
-            title="Nominate Candidate"
-            description="Submit zonal or national Board of Director nominations."
-            href="/login?next=/nominate"
-            accent={access.primaryAction === 'nominate'}
-            enabled={access.canNominate}
-            disabledMessage={NOMINATE_DISABLED_MESSAGE}
-          />
-          <DashboardTile
-            icon="vote"
-            title="Vote Now"
-            description="Cast your official ballot during the voting period."
-            href="/login?next=/vote"
-            accent={access.primaryAction === 'vote'}
-            enabled={access.canVote}
-            disabledMessage={VOTE_DISABLED_MESSAGE}
-          />
-          <DashboardTile
-            icon="info"
-            title="Election Info"
-            description="View candidates, timeline, and certified results."
-            href="/candidates"
-            enabled
-          />
-          <DashboardTile
-            icon="profile"
+        <section className="mt-8 grid grid-cols-1 gap-5 sm:mt-10 md:grid-cols-2 md:gap-6 lg:gap-8">
+          <LandingPathCard
+            icon="register"
             title="Register"
-            description="Apply for membership — ELECOM approval required before login."
+            description="New members: apply for roster membership. Sign-up is always open; ELECOM reviews and approves applications before you can sign in."
+            ctaLabel="Start registration"
             href="/register"
-            enabled
           />
-          <DashboardTile
-            icon="admin"
-            title="ELECOM Admin"
-            description="Election committee administration portal."
-            href="/admin/login"
-            enabled
+          <LandingPathCard
+            icon="signin"
+            title="Sign in"
+            description="Approved members: verify your license and one-time password to access member tools."
+            ctaLabel="Sign in to continue"
+            href="/login?next=/dashboard"
+            accent
+            features={[
+              'Nominate candidates for Board of Director seats',
+              'Cast your official ballot during voting',
+              'View election info, candidates, and certified results',
+            ]}
+            footerLink={{
+              href: '/candidates',
+              label: 'View public election info without signing in',
+            }}
           />
         </section>
 
         <section className="mt-8 rounded-xl border-2 border-[#E8E6E3] bg-white p-5 sm:mt-10 sm:p-6 md:p-8">
           <h3 className="text-lg font-semibold text-[#1C1C1C]">Need help?</h3>
           <p className="mt-2 text-base text-[#4D4D4D]">
-            Contact the Election Committee (ELECOM) for assistance with login,
-            nominations, or voting.
+            Contact the Election Committee (ELECOM) for assistance with registration,
+            login, nominations, or voting.
           </p>
-          <Button variant="help" className="mt-4 min-h-[44px] px-0">
-            ELECOM Support
-          </Button>
+          <p className="mt-4 text-sm text-[#4D4D4D]">
+            ELECOM administrators:{' '}
+            <Link href="/admin/login" className="font-semibold text-[#63A9FA] underline">
+              Admin sign in
+            </Link>
+          </p>
         </section>
       </main>
     </div>

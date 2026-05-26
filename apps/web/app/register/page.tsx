@@ -9,7 +9,7 @@ export default function RegisterPage() {
     <div className={pageShell}>
       <SiteHeader
         title="Member registration"
-        rightLink={{ href: '/login', label: 'Member Login' }}
+        rightLink={{ href: '/', label: 'Home' }}
       />
       <main className={mainNarrow}>
         <p className="text-base text-[#4D4D4D]">

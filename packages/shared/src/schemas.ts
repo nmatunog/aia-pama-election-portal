@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ELECTION_PHASES, ZONES } from './constants';
+import { formatMemberFullName } from './member-name';
 
 export const validateMemberSchema = z.object({
   licenseCode: z
@@ -113,12 +114,25 @@ export const memberUpdateSchema = z.object({
   active: z.boolean().optional(),
 });
 
-export const memberSignupSchema = z.object({
-  licenseCode: z.string().min(1).max(50).trim(),
-  fullName: z.string().min(2).max(200).trim(),
-  zone: z.enum(ZONES),
-  contactEmail: z.string().email().max(255),
-});
+export const memberSignupSchema = z
+  .object({
+    licenseCode: z.string().min(1).max(50).trim(),
+    lastName: z.string().min(1, 'Last name is required').max(100).trim(),
+    firstName: z.string().min(1, 'First name is required').max(100).trim(),
+    middleInitial: z.string().max(10).trim().optional(),
+    suffix: z.string().max(20).trim().optional(),
+    zone: z.enum(ZONES),
+    contactEmail: z.string().email().max(255),
+  })
+  .transform((data) => ({
+    ...data,
+    fullName: formatMemberFullName(
+      data.lastName,
+      data.firstName,
+      data.middleInitial,
+      data.suffix,
+    ),
+  }));
 
 export const memberApprovalSchema = z.object({
   memberId: z.string().uuid(),

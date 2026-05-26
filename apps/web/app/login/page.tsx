@@ -17,10 +17,16 @@ export default function LoginPage() {
       <div className="flex flex-1 items-center justify-center px-4 py-6 safe-bottom sm:px-6 sm:py-10">
         <div className={`${card} max-w-md md:max-w-lg`}>
           <PamaLogo context="hero" className="mx-auto mb-4 block sm:mb-6" priority />
-          <h1 className={pageTitle}>Election Login</h1>
+          <h1 className={pageTitle}>Member sign in</h1>
           <p className={pageLead}>
-            Step 1: Verify your membership. Step 2: Enter your one-time password and
-            click Verify &amp; Sign In.
+            Sign in to nominate candidates, vote, or view your election dashboard.
+            Step 1: verify membership. Step 2: enter your one-time password.
+          </p>
+          <p className="mt-3 text-sm text-[#4D4D4D]">
+            Not registered yet?{' '}
+            <Link href="/register" className="font-semibold text-[#63A9FA] underline">
+              Apply for membership
+            </Link>
           </p>
           <Suspense fallback={<p className="mt-8 text-[#4D4D4D]">Loading…</p>}>
             <LoginForm />

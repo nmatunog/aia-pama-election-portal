@@ -9,7 +9,10 @@ type Props = {
 
 export function RegisterForm({ zones }: Props) {
   const [licenseCode, setLicenseCode] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [middleInitial, setMiddleInitial] = useState('');
+  const [suffix, setSuffix] = useState('');
   const [zone, setZone] = useState(zones[0] ?? '');
   const [contactEmail, setContactEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -24,7 +27,15 @@ export function RegisterForm({ zones }: Props) {
     const res = await fetch('/api/public/member-signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ licenseCode, fullName, zone, contactEmail }),
+      body: JSON.stringify({
+        licenseCode,
+        lastName,
+        firstName,
+        middleInitial: middleInitial.trim() || undefined,
+        suffix: suffix.trim() || undefined,
+        zone,
+        contactEmail,
+      }),
     });
     const data = (await res.json()) as { ok: boolean; message?: string; error?: string };
     setBusy(false);
@@ -58,18 +69,68 @@ export function RegisterForm({ zones }: Props) {
           required
         />
       </div>
-      <div>
-        <label htmlFor="fullName" className="mb-2 block text-base font-semibold">
-          Full name
-        </label>
-        <input
-          id="fullName"
-          className={inputField}
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-        />
-      </div>
+
+      <fieldset className="space-y-4">
+        <legend className="text-base font-semibold text-[#1C1C1C]">Legal name</legend>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_minmax(5rem,8rem)]">
+          <div>
+            <label htmlFor="lastName" className="mb-2 block text-sm font-semibold text-[#4D4D4D]">
+              Last name
+            </label>
+            <input
+              id="lastName"
+              className={inputField}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              autoComplete="family-name"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="suffix" className="mb-2 block text-sm font-semibold text-[#4D4D4D]">
+              Suffix
+            </label>
+            <input
+              id="suffix"
+              className={inputField}
+              value={suffix}
+              onChange={(e) => setSuffix(e.target.value)}
+              placeholder="Jr., III"
+              maxLength={20}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_minmax(5rem,7rem)]">
+          <div>
+            <label htmlFor="firstName" className="mb-2 block text-sm font-semibold text-[#4D4D4D]">
+              First name
+            </label>
+            <input
+              id="firstName"
+              className={inputField}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              autoComplete="given-name"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="middleInitial" className="mb-2 block text-sm font-semibold text-[#4D4D4D]">
+              MI
+            </label>
+            <input
+              id="middleInitial"
+              className={inputField}
+              value={middleInitial}
+              onChange={(e) => setMiddleInitial(e.target.value)}
+              autoComplete="additional-name"
+              placeholder="Optional"
+              maxLength={10}
+            />
+          </div>
+        </div>
+      </fieldset>
+
       <div>
         <label htmlFor="zone" className="mb-2 block text-base font-semibold">
           Zone
