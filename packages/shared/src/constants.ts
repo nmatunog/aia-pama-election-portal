@@ -10,6 +10,11 @@ export const ZONES = [
 
 export type Zone = (typeof ZONES)[number];
 
+/** Member roster position (registration) */
+export const MEMBER_POSITIONS = ['Agency Director', 'District Director'] as const;
+
+export type MemberPosition = (typeof MEMBER_POSITIONS)[number];
+
 /** Election lifecycle phases */
 export const ELECTION_PHASES = [
   'draft',

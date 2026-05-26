@@ -19,6 +19,8 @@ publicRoutes.post('/member-signup', async (c) => {
   const result = await createMemberSignup(c.env, {
     licenseCode: parsed.data.licenseCode,
     fullName: parsed.data.fullName,
+    position: parsed.data.position,
+    agencyName: parsed.data.agencyName,
     zone: parsed.data.zone,
     contactEmail: parsed.data.contactEmail,
   });

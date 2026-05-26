@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ELECTION_PHASES, ZONES } from './constants';
+import { ELECTION_PHASES, MEMBER_POSITIONS, ZONES } from './constants';
 import { formatMemberFullName } from './member-name';
 
 export const validateMemberSchema = z.object({
@@ -121,6 +121,10 @@ export const memberSignupSchema = z
     firstName: z.string().min(1, 'First name is required').max(100).trim(),
     middleInitial: z.string().max(10).trim().optional(),
     suffix: z.string().max(20).trim().optional(),
+    position: z.enum(MEMBER_POSITIONS, {
+      errorMap: () => ({ message: 'Position is required' }),
+    }),
+    agencyName: z.string().min(1, 'Name of agency is required').max(200).trim(),
     zone: z.enum(ZONES),
     contactEmail: z.string().email().max(255),
   })

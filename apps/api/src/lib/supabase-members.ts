@@ -19,6 +19,8 @@ export type MemberRecord = {
   id: string;
   full_name: string;
   zone: string;
+  position: string | null;
+  agency_name: string | null;
   good_standing: boolean;
   active: boolean;
   approval_status: 'pending_approval' | 'approved' | 'rejected';
@@ -28,7 +30,7 @@ export type MemberRecord = {
 };
 
 const MEMBER_SELECT =
-  'id,full_name,zone,good_standing,active,approval_status,contact_email,registered_at,rejection_reason,license_code_hash';
+  'id,full_name,zone,position,agency_name,good_standing,active,approval_status,contact_email,registered_at,rejection_reason,license_code_hash';
 
 export async function findMemberById(
   env: Env,
@@ -127,6 +129,8 @@ export async function createMemberSignup(
   input: {
     licenseCode: string;
     fullName: string;
+    position: string;
+    agencyName: string;
     zone: string;
     contactEmail: string;
   },
@@ -153,6 +157,8 @@ export async function createMemberSignup(
           headers: supabaseHeaders(env, { Prefer: 'return=minimal' }),
           body: JSON.stringify({
             full_name: input.fullName,
+            position: input.position,
+            agency_name: input.agencyName,
             zone: input.zone,
             contact_email: input.contactEmail,
             approval_status: 'pending_approval',
@@ -174,6 +180,8 @@ export async function createMemberSignup(
     body: JSON.stringify({
       license_code_hash: licenseHash,
       full_name: input.fullName,
+      position: input.position,
+      agency_name: input.agencyName,
       zone: input.zone,
       contact_email: input.contactEmail,
       approval_status: 'pending_approval',

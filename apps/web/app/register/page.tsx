@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ZONES } from '@aia-pama/shared';
+import { MEMBER_POSITIONS, ZONES } from '@aia-pama/shared';
 import { RegisterForm } from './register-form';
 import { SiteHeader } from '@/components/site-header';
 import { mainNarrow, pageShell } from '@/lib/layout-classes';
@@ -16,7 +16,7 @@ export default function RegisterPage() {
           Membership sign-up is always open. ELECOM will review your application before
           you can log in and participate in the election.
         </p>
-        <RegisterForm zones={[...ZONES]} />
+        <RegisterForm zones={[...ZONES]} positions={[...MEMBER_POSITIONS]} />
         <p className="mt-6 text-center text-sm text-[#4D4D4D]">
           Already approved?{' '}
           <Link href="/login" className="font-semibold text-[#63A9FA] underline">

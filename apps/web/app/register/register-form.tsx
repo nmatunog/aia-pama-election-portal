@@ -5,14 +5,17 @@ import { inputField, primaryBtn } from '@/lib/layout-classes';
 
 type Props = {
   zones: string[];
+  positions: string[];
 };
 
-export function RegisterForm({ zones }: Props) {
+export function RegisterForm({ zones, positions }: Props) {
   const [licenseCode, setLicenseCode] = useState('');
   const [lastName, setLastName] = useState('');
   const [firstName, setFirstName] = useState('');
   const [middleInitial, setMiddleInitial] = useState('');
   const [suffix, setSuffix] = useState('');
+  const [position, setPosition] = useState(positions[0] ?? '');
+  const [agencyName, setAgencyName] = useState('');
   const [zone, setZone] = useState(zones[0] ?? '');
   const [contactEmail, setContactEmail] = useState('');
   const [busy, setBusy] = useState(false);
@@ -33,6 +36,8 @@ export function RegisterForm({ zones }: Props) {
         firstName,
         middleInitial: middleInitial.trim() || undefined,
         suffix: suffix.trim() || undefined,
+        position,
+        agencyName,
         zone,
         contactEmail,
       }),
@@ -131,6 +136,37 @@ export function RegisterForm({ zones }: Props) {
         </div>
       </fieldset>
 
+      <div>
+        <label htmlFor="position" className="mb-2 block text-base font-semibold">
+          Position
+        </label>
+        <select
+          id="position"
+          className={inputField}
+          value={position}
+          onChange={(e) => setPosition(e.target.value)}
+          required
+        >
+          {positions.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label htmlFor="agencyName" className="mb-2 block text-base font-semibold">
+          Name of agency
+        </label>
+        <input
+          id="agencyName"
+          className={inputField}
+          value={agencyName}
+          onChange={(e) => setAgencyName(e.target.value)}
+          placeholder="Your agency or district office"
+          required
+        />
+      </div>
       <div>
         <label htmlFor="zone" className="mb-2 block text-base font-semibold">
           Zone

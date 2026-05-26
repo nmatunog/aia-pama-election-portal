@@ -386,6 +386,8 @@ adminRoutes.get('/members/applications', async (c) => {
     applications: pending.map((m) => ({
       memberId: m.id,
       fullName: m.full_name,
+      position: m.position,
+      agencyName: m.agency_name,
       zone: m.zone,
       contactEmail: m.contact_email,
       registeredAt: m.registered_at,
