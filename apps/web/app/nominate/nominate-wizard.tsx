@@ -19,7 +19,7 @@ import {
 } from '@/lib/layout-classes';
 
 type NominationType = 'zonal' | 'national';
-type WizardStep = 'type' | 'candidate' | 'endorsers' | 'review' | 'done';
+type WizardStep = 'type' | 'candidate' | 'review' | 'done';
 
 type Props = {
   electionId: string;
@@ -47,18 +47,13 @@ export function NominateWizard({
   const [step, setStep] = useState<WizardStep>('type');
   const [nomType, setNomType] = useState<NominationType | null>(null);
   const [candidate, setCandidate] = useState<MemberSearchResult | null>(null);
-  const [endorsers, setEndorsers] = useState<MemberSearchResult[]>([]);
   const [candidateQuery, setCandidateQuery] = useState('');
-  const [endorserQuery, setEndorserQuery] = useState('');
   const [candidateResults, setCandidateResults] = useState<MemberSearchResult[]>([]);
-  const [endorserResults, setEndorserResults] = useState<MemberSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const minEndorsers =
-    nomType === 'national' ? RULES.MIN_NATIONAL_ENDORSERS : RULES.MIN_ZONAL_ENDORSERS;
-  const totalSteps = 4;
+  const totalSteps = 3;
 
   const searchMembers = useCallback(
     async (
@@ -92,36 +87,11 @@ export function NominateWizard({
     return () => window.clearTimeout(t);
   }, [candidateQuery, nomType, step, searchMembers]);
 
-  useEffect(() => {
-    if (step !== 'endorsers' || !nomType) return;
-    const t = window.setTimeout(async () => {
-      const { members, error: searchError } = await searchMembers(endorserQuery, nomType);
-      setEndorserResults(
-        members.filter(
-          (m) => m.id !== candidate?.id && !endorsers.some((e) => e.id === m.id),
-        ),
-      );
-      if (searchError) setError(searchError);
-    }, 300);
-    return () => window.clearTimeout(t);
-  }, [endorserQuery, nomType, step, candidate, endorsers, searchMembers]);
-
   function pickType(type: NominationType) {
     setNomType(type);
     setCandidate(null);
-    setEndorsers([]);
     setError(null);
     setStep('candidate');
-  }
-
-  function toggleEndorser(member: MemberSearchResult) {
-    setEndorsers((prev) => {
-      if (prev.some((e) => e.id === member.id)) {
-        return prev.filter((e) => e.id !== member.id);
-      }
-      return [...prev, member];
-    });
-    setError(null);
   }
 
   async function handleSubmit() {
@@ -133,7 +103,7 @@ export function NominateWizard({
       const data = await apiPost<SubmitNominationResponse>(path, {
         electionId,
         candidateMemberId: candidate.id,
-        endorserMemberIds: endorsers.map((e) => e.id),
+        endorserMemberIds: [],
       });
       if (!data.ok) {
         setError(data.error ?? 'Could not submit nomination');
@@ -185,8 +155,7 @@ export function NominateWizard({
             <p className="text-lg font-semibold text-[#1C1C1C]">Zonal</p>
             <p className="mt-2 text-sm text-[#4D4D4D]">
               Zonal seat for <strong>{memberZone}</strong> only — nominee must be a member of your
-              zone. Requires {RULES.MIN_ZONAL_ENDORSERS} endorser from your zone. The same person
-              may also be nominated nationally.
+              zone. The same person may also be nominated nationally.
             </p>
             {!limits.canSubmitZonal && (
               <p className="mt-2 text-sm font-medium text-[#9A6700]">
@@ -209,9 +178,8 @@ export function NominateWizard({
           >
             <p className="text-lg font-semibold text-[#1C1C1C]">National</p>
             <p className="mt-2 text-sm text-[#4D4D4D]">
-              National Board seat — nominees may be from any zone. Requires at least{' '}
-              {RULES.MIN_NATIONAL_ENDORSERS} endorsers. A zonal nominee may also run nationally;
-              if they win their zone, they are not seated on the national board.
+              National Board seat — nominees may be from any zone. A zonal nominee may also run
+              nationally; if they win their zone, they are not seated on the national board.
             </p>
             {!limits.canSubmitNational && (
               <p className="mt-2 text-sm font-medium text-[#9A6700]">
@@ -321,96 +289,6 @@ export function NominateWizard({
                 setError('Please select a candidate.');
                 return;
               }
-              setStep('endorsers');
-            }}
-          >
-            Continue to Endorsers
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'endorsers') {
-    return (
-      <div className="mt-8 space-y-5">
-        <StepIndicator current={3} total={totalSteps} />
-        <p className="text-base text-[#4D4D4D]">
-          Add at least <strong>{minEndorsers}</strong> endorser{minEndorsers > 1 ? 's' : ''}. Tap a
-          name to add or remove.
-        </p>
-
-        {endorsers.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {endorsers.map((e) => (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => toggleEndorser(e)}
-                className="min-h-[44px] rounded-full border-2 border-[#D41245] bg-[#FDF2F5] px-4 py-2 text-sm font-semibold text-[#D41245] sm:text-base"
-              >
-                {e.full_name} ×
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div>
-          <label htmlFor="endorser-search" className="mb-2 block text-base font-semibold text-[#1C1C1C]">
-            Search endorsers
-          </label>
-          <input
-            id="endorser-search"
-            type="search"
-            value={endorserQuery}
-            onChange={(e) => setEndorserQuery(e.target.value)}
-            placeholder="Type at least 2 letters…"
-            className={inputField}
-          />
-        </div>
-
-        <ul className={listScroll}>
-          {endorserResults.map((m) => (
-            <li key={m.id}>
-              <button
-                type="button"
-                onClick={() => toggleEndorser(m)}
-                className={`w-full min-h-[48px] rounded-lg border-2 px-4 py-3 text-left text-base ${
-                  endorsers.some((e) => e.id === m.id)
-                    ? 'border-[#D41245] bg-[#FDF2F5]'
-                    : 'border-[#E8E6E3] bg-white'
-                }`}
-              >
-                {m.full_name} <span className="text-sm text-[#4D4D4D]">({m.zone})</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        <p className="text-sm text-[#4D4D4D]">
-          {endorsers.length}/{minEndorsers} endorsers selected
-        </p>
-
-        {error && (
-          <p className="rounded-lg bg-[#FDF2F5] px-4 py-3 text-sm font-medium text-[#D41245]">
-            {error}
-          </p>
-        )}
-
-        <div className={actionRowPrimaryFirst}>
-          <button type="button" className={secondaryBtn} onClick={() => setStep('candidate')}>
-            ← Back
-          </button>
-          <button
-            type="button"
-            className={primaryBtn}
-            disabled={endorsers.length < minEndorsers}
-            onClick={() => {
-              if (endorsers.length < minEndorsers) {
-                setError(`Please select at least ${minEndorsers} endorsers.`);
-                return;
-              }
-              setError(null);
               setStep('review');
             }}
           >
@@ -423,7 +301,7 @@ export function NominateWizard({
 
   return (
     <div className="mt-8 space-y-5">
-      <StepIndicator current={4} total={totalSteps} />
+      <StepIndicator current={3} total={totalSteps} />
       <div className="rounded-xl border-2 border-[#E8E6E3] bg-white p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-[#1C1C1C]">Review before submitting</h2>
         <dl className="mt-4 space-y-3 text-base">
@@ -435,12 +313,6 @@ export function NominateWizard({
             <dt className="text-sm font-semibold uppercase text-[#4D4D4D]">Candidate</dt>
             <dd className="text-[#1C1C1C]">
               {candidate?.full_name} ({candidate?.zone})
-            </dd>
-          </div>
-          <div>
-            <dt className="text-sm font-semibold uppercase text-[#4D4D4D]">Endorsers</dt>
-            <dd className="text-[#1C1C1C]">
-              {endorsers.map((e) => e.full_name).join(', ')}
             </dd>
           </div>
           <div>
@@ -459,7 +331,7 @@ export function NominateWizard({
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button type="button" className={secondaryBtn} onClick={() => setStep('endorsers')}>
+        <button type="button" className={secondaryBtn} onClick={() => setStep('candidate')}>
           ← Back
         </button>
         <button type="button" className={primaryBtn} disabled={loading} onClick={handleSubmit}>

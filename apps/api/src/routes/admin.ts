@@ -295,6 +295,9 @@ adminRoutes.patch('/members', async (c) => {
   const result = await updateMember(c.env, parsed.data.memberId, {
     goodStanding: parsed.data.goodStanding,
     active: parsed.data.active,
+    position: parsed.data.position,
+    agencyName: parsed.data.agencyName,
+    isElecom: parsed.data.isElecom,
   });
   if ('error' in result) {
     return c.json({ ok: false, error: result.error }, 400);
@@ -309,6 +312,9 @@ adminRoutes.patch('/members', async (c) => {
     payload: {
       goodStanding: parsed.data.goodStanding,
       active: parsed.data.active,
+      position: parsed.data.position ?? null,
+      agencyName: parsed.data.agencyName ?? null,
+      isElecom: parsed.data.isElecom ?? null,
     },
   });
 

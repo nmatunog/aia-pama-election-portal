@@ -246,7 +246,20 @@ export async function deleteMemberRecord(
   const m = await findMemberById(env, memberId);
   if (!m) return { error: 'Member not found' };
 
-  if (await isSuperuserMember(env, m.license_code_hash)) {
+  const full = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/members?id=eq.${memberId}&select=is_elecom,license_code_hash&limit=1`,
+    { headers: supabaseHeaders(env) },
+  );
+  if (full.ok) {
+    const rows = (await full.json()) as { is_elecom: boolean; license_code_hash: string }[];
+    const row = rows[0];
+    if (
+      row &&
+      (row.is_elecom || (await isSuperuserMember(env, row.license_code_hash)))
+    ) {
+      return { error: 'Cannot delete an ELECOM committee account' };
+    }
+  } else if (await isSuperuserMember(env, m.license_code_hash)) {
     return { error: 'Cannot delete ELECOM superuser account' };
   }
 

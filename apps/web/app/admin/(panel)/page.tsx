@@ -123,7 +123,7 @@ export default async function ElecomAdminPage() {
           <p className="text-2xl font-bold text-[#D41245]">{voters.eligible}</p>
           <p className="text-sm text-[#4D4D4D]">
             <Link href="/admin/voters" className="font-semibold text-[#63A9FA] underline">
-              Eligible voters
+              Member roster
             </Link>
           </p>
         </div>

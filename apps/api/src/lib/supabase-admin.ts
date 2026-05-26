@@ -47,10 +47,14 @@ export type AdminVoter = {
   memberId: string;
   fullName: string;
   zone: string;
+  position: string | null;
+  agencyName: string | null;
   goodStanding: boolean;
   active: boolean;
   approvalStatus: string;
   contactEmail: string | null;
+  registeredAt: string | null;
+  isElecom: boolean;
   hasVoted: boolean;
   votedAt: string | null;
 };
@@ -226,11 +230,14 @@ export async function listQualifiedVoters(
   env: Env,
   electionId: string,
   zone?: string,
-): Promise<{ voters: AdminVoter[]; stats: { total: number; eligible: number; voted: number } }> {
+): Promise<{
+  voters: AdminVoter[];
+  stats: { total: number; pending: number; eligible: number; voted: number };
+}> {
   let membersUrl =
     `${env.SUPABASE_URL}/rest/v1/members?` +
-    `select=id,full_name,zone,good_standing,active,approval_status,contact_email,license_code_hash` +
-    `&order=full_name.asc`;
+    `select=id,full_name,zone,position,agency_name,good_standing,active,approval_status,contact_email,registered_at,is_elecom,license_code_hash` +
+    `&order=registered_at.desc`;
 
   if (zone && zone !== 'all') {
     membersUrl += `&zone=eq.${encodeURIComponent(zone)}`;
@@ -245,17 +252,21 @@ export async function listQualifiedVoters(
   ]);
 
   if (!membersRes.ok) {
-    return { voters: [], stats: { total: 0, eligible: 0, voted: 0 } };
+    return { voters: [], stats: { total: 0, pending: 0, eligible: 0, voted: 0 } };
   }
 
   const members = (await membersRes.json()) as Array<{
     id: string;
     full_name: string;
     zone: string;
+    position: string | null;
+    agency_name: string | null;
     good_standing: boolean;
     active: boolean;
     approval_status: string;
     contact_email: string | null;
+    registered_at: string | null;
+    is_elecom: boolean;
     license_code_hash: string;
   }>;
 
@@ -271,15 +282,28 @@ export async function listQualifiedVoters(
       memberId: m.id,
       fullName: m.full_name,
       zone: m.zone,
+      position: m.position,
+      agencyName: m.agency_name,
       goodStanding: m.good_standing,
       active: m.active,
       approvalStatus: m.approval_status ?? 'approved',
       contactEmail: m.contact_email,
+      registeredAt: m.registered_at,
+      isElecom: m.is_elecom === true,
       hasVoted: votedAt !== null,
       votedAt,
     };
   });
 
+  voters.sort((a, b) => {
+    const rank = (s: string) =>
+      s === 'pending_approval' ? 0 : s === 'rejected' ? 2 : 1;
+    const dr = rank(a.approvalStatus) - rank(b.approvalStatus);
+    if (dr !== 0) return dr;
+    return a.fullName.localeCompare(b.fullName);
+  });
+
+  const pending = voters.filter((v) => v.approvalStatus === 'pending_approval').length;
   const eligible = voters.filter(
     (v) => v.approvalStatus === 'approved' && v.goodStanding && v.active,
   ).length;
@@ -287,7 +311,7 @@ export async function listQualifiedVoters(
 
   return {
     voters,
-    stats: { total: voters.length, eligible, voted },
+    stats: { total: voters.length, pending, eligible, voted },
   };
 }
 
@@ -342,11 +366,20 @@ export async function updateCandidateStatus(
 export async function updateMember(
   env: Env,
   memberId: string,
-  patch: { goodStanding?: boolean; active?: boolean },
+  patch: {
+    goodStanding?: boolean;
+    active?: boolean;
+    position?: string;
+    agencyName?: string;
+    isElecom?: boolean;
+  },
 ): Promise<{ ok: true } | { error: string }> {
-  const body: Record<string, boolean> = {};
+  const body: Record<string, boolean | string> = {};
   if (patch.goodStanding !== undefined) body.good_standing = patch.goodStanding;
   if (patch.active !== undefined) body.active = patch.active;
+  if (patch.position !== undefined) body.position = patch.position;
+  if (patch.agencyName !== undefined) body.agency_name = patch.agencyName;
+  if (patch.isElecom !== undefined) body.is_elecom = patch.isElecom;
 
   if (Object.keys(body).length === 0) {
     return { error: 'No fields to update' };

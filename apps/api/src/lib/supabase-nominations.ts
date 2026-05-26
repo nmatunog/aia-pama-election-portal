@@ -204,20 +204,22 @@ export async function submitNominationPackage(
   const nominationId = nominations[0]?.id;
   if (!nominationId) return { error: 'Could not create nomination record' };
 
-  const endorsementRows = input.endorserLicenseHashes.map((hash) => ({
-    nomination_id: nominationId,
-    endorser_license_hash: hash,
-  }));
+  if (input.endorserLicenseHashes.length > 0) {
+    const endorsementRows = input.endorserLicenseHashes.map((hash) => ({
+      nomination_id: nominationId,
+      endorser_license_hash: hash,
+    }));
 
-  const endorseRes = await fetch(`${env.SUPABASE_URL}/rest/v1/endorsements`, {
-    method: 'POST',
-    headers: supabaseHeaders(env),
-    body: JSON.stringify(endorsementRows),
-  });
+    const endorseRes = await fetch(`${env.SUPABASE_URL}/rest/v1/endorsements`, {
+      method: 'POST',
+      headers: supabaseHeaders(env),
+      body: JSON.stringify(endorsementRows),
+    });
 
-  if (!endorseRes.ok) {
-    console.error('Insert endorsements failed:', endorseRes.status, await endorseRes.text());
-    return { error: 'Could not save endorsers' };
+    if (!endorseRes.ok) {
+      console.error('Insert endorsements failed:', endorseRes.status, await endorseRes.text());
+      return { error: 'Could not save endorsers' };
+    }
   }
 
   return { candidateId, nominationId };

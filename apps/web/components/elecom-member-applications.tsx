@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { ElecomMemberProfileEditor } from '@/components/elecom-member-profile-editor';
 import { FormattedDateTime } from '@/components/formatted-datetime';
 import { primaryBtn, secondaryBtn } from '@/lib/layout-classes';
 
@@ -72,10 +73,18 @@ export function ElecomMemberApplications({ initial }: Props) {
           className="rounded-xl border-2 border-[#E8E6E3] bg-white p-5"
         >
           <p className="font-semibold text-[#1C1C1C]">{a.fullName}</p>
-          <p className="mt-1 text-sm text-[#4D4D4D]">
-            {a.position ?? '—'} · {a.agencyName ?? '—'}
-          </p>
-          <p className="mt-1 text-sm text-[#4D4D4D]">
+          <div className="mt-3">
+            <ElecomMemberProfileEditor
+              memberId={a.memberId}
+              initialPosition={a.position}
+              initialAgencyName={a.agencyName}
+              busy={busyId === a.memberId}
+              onBusyChange={(b) => setBusyId(b ? a.memberId : null)}
+              onError={setError}
+              onSaved={() => router.refresh()}
+            />
+          </div>
+          <p className="mt-3 text-sm text-[#4D4D4D]">
             {a.zone} · {a.contactEmail ?? '—'} · applied{' '}
             <FormattedDateTime iso={a.registeredAt} />
           </p>

@@ -4,7 +4,7 @@ import type { Env } from '../env';
 import { findMemberByLicenseHash } from '../lib/supabase';
 import { sendOtpEmail } from '../lib/email';
 import { saveOtpSession, verifyOtpSessionDb } from '../lib/supabase-otp';
-import { isSuperuserLicense, superuserEmail } from '../lib/elecom-auth-config';
+import { memberHasElecomPrivileges, superuserEmail } from '../lib/elecom-auth-config';
 import { signVoterToken, verifyVoterToken } from '../lib/jwt';
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
@@ -131,15 +131,17 @@ authRoutes.post('/verify-otp', async (c) => {
     return c.json({ ok: false, error: 'Server misconfigured' }, 500);
   }
 
-  const superuser = await isSuperuserLicense(c.env, parsed.data.licenseCode);
+  const isElecom = memberHasElecomPrivileges(c.env, member, parsed.data.licenseCode);
+  const elecomEmail =
+    member.contact_email?.trim() || (isElecom ? superuserEmail(c.env) : undefined);
   const token = await signVoterToken(
     {
       sub: member.id,
       name: member.full_name,
       zone: member.zone,
       licenseHash,
-      elecom: superuser,
-      email: superuser ? superuserEmail(c.env) : undefined,
+      elecom: isElecom,
+      email: isElecom ? elecomEmail : undefined,
     },
     secret,
   );
@@ -150,7 +152,7 @@ authRoutes.post('/verify-otp', async (c) => {
     member: {
       fullName: member.full_name,
       zone: member.zone,
-      isElecom: superuser,
+      isElecom,
     },
   });
 });

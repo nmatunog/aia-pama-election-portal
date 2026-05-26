@@ -8,13 +8,15 @@ export type MemberRow = {
   good_standing: boolean;
   active: boolean;
   approval_status?: string;
+  is_elecom?: boolean;
+  contact_email?: string | null;
 };
 
 export async function findMemberByLicenseHash(
   env: Env,
   licenseHash: string,
 ): Promise<MemberRow | null> {
-  const url = `${env.SUPABASE_URL}/rest/v1/members?license_code_hash=eq.${licenseHash}&select=id,full_name,zone,good_standing,active&limit=1`;
+  const url = `${env.SUPABASE_URL}/rest/v1/members?license_code_hash=eq.${licenseHash}&select=id,full_name,zone,good_standing,active,is_elecom,contact_email&limit=1`;
 
   const res = await fetch(url, { headers: supabaseHeaders(env) });
 

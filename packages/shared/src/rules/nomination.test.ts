@@ -34,7 +34,15 @@ function baseCtx(
 }
 
 describe('validateZonalNomination', () => {
-  it('accepts valid zonal nomination', () => {
+  it('accepts valid zonal nomination without endorsers', () => {
+    const result = validateZonalNomination(
+      { candidateMemberId: 'c1', endorserMemberIds: [] },
+      baseCtx({ endorsers: [] }),
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it('accepts valid zonal nomination with endorsers when provided', () => {
     const result = validateZonalNomination(
       { candidateMemberId: 'c1', endorserMemberIds: ['e1'] },
       baseCtx(),
@@ -79,33 +87,23 @@ describe('validateZonalNomination', () => {
 });
 
 describe('validateNationalNomination', () => {
-  it('accepts valid national nomination with 3 endorsers', () => {
+  it('accepts valid national nomination without endorsers', () => {
     const result = validateNationalNomination(
-      { candidateMemberId: 'c1', endorserMemberIds: ['e1', 'e2', 'e3'] },
-      baseCtx({
-        endorsers: [visayas('e1'), visayas('e2'), visayas('e3')],
-      }),
+      { candidateMemberId: 'c1', endorserMemberIds: [] },
+      baseCtx({ endorsers: [] }),
     );
     expect(result.ok).toBe(true);
-  });
-
-  it('rejects fewer than 3 endorsers', () => {
-    const result = validateNationalNomination(
-      { candidateMemberId: 'c1', endorserMemberIds: ['e1', 'e2'] },
-      baseCtx({ endorsers: [visayas('e1'), visayas('e2')] }),
-    );
-    expect(result.ok).toBe(false);
   });
 
   it('allows national nomination when member already has zonal candidacy', () => {
     const result = validateNationalNomination(
       {
         candidateMemberId: 'c1',
-        endorserMemberIds: ['e1', 'e2', 'e3'],
+        endorserMemberIds: [],
       },
       baseCtx({
         candidateAlreadyNominatedZonal: true,
-        endorsers: [visayas('e1'), visayas('e2'), visayas('e3')],
+        endorsers: [],
       }),
     );
     expect(result.ok).toBe(true);
@@ -121,10 +119,10 @@ describe('validateNationalNomination', () => {
 
   it('rejects when nominator exceeded national nomination limit', () => {
     const result = validateNationalNomination(
-      { candidateMemberId: 'c1', endorserMemberIds: ['e1', 'e2', 'e3'] },
+      { candidateMemberId: 'c1', endorserMemberIds: [] },
       baseCtx({
         nominatorNationalCount: 5,
-        endorsers: [visayas('e1'), visayas('e2'), visayas('e3')],
+        endorsers: [],
       }),
     );
     expect(result.ok).toBe(false);

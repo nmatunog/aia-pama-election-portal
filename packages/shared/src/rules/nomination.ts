@@ -107,35 +107,37 @@ export function validateZonalNomination(
     };
   }
 
-  if (input.endorserMemberIds.length < RULES.MIN_ZONAL_ENDORSERS) {
-    return {
-      ok: false,
-      error: `At least ${RULES.MIN_ZONAL_ENDORSERS} endorser is required for a zonal nomination`,
-    };
-  }
-
-  const distinctErr = assertDistinctEndorsers(input.endorserMemberIds);
-  if (distinctErr) return distinctErr;
-
-  const selfEndorseErr = assertEndorsersNotIncludingNominator(
-    ctx.nominator.id,
-    input.endorserMemberIds,
-  );
-  if (selfEndorseErr) return selfEndorseErr;
-
   if (input.candidateMemberId !== ctx.candidate.id) {
     return { ok: false, error: 'Candidate record mismatch' };
   }
 
-  if (ctx.endorsers.length !== input.endorserMemberIds.length) {
-    return { ok: false, error: 'One or more endorsers were not found' };
-  }
+  if (input.endorserMemberIds.length > 0) {
+    if (input.endorserMemberIds.length < RULES.MIN_ZONAL_ENDORSERS) {
+      return {
+        ok: false,
+        error: `At least ${RULES.MIN_ZONAL_ENDORSERS} endorser is required for a zonal nomination`,
+      };
+    }
 
-  for (const endorser of ctx.endorsers) {
-    const err = assertEligibleMember(endorser, 'Endorser');
-    if (err) return err;
-    if (endorser.zone !== ctx.nominator.zone) {
-      return { ok: false, error: 'Zonal endorsers must be from your zone' };
+    const distinctErr = assertDistinctEndorsers(input.endorserMemberIds);
+    if (distinctErr) return distinctErr;
+
+    const selfEndorseErr = assertEndorsersNotIncludingNominator(
+      ctx.nominator.id,
+      input.endorserMemberIds,
+    );
+    if (selfEndorseErr) return selfEndorseErr;
+
+    if (ctx.endorsers.length !== input.endorserMemberIds.length) {
+      return { ok: false, error: 'One or more endorsers were not found' };
+    }
+
+    for (const endorser of ctx.endorsers) {
+      const err = assertEligibleMember(endorser, 'Endorser');
+      if (err) return err;
+      if (endorser.zone !== ctx.nominator.zone) {
+        return { ok: false, error: 'Zonal endorsers must be from your zone' };
+      }
     }
   }
 
@@ -176,33 +178,35 @@ export function validateNationalNomination(
 
   /** National nominees may be from any zone; dual zonal + national candidacy is allowed. */
 
-  if (input.endorserMemberIds.length < RULES.MIN_NATIONAL_ENDORSERS) {
-    return {
-      ok: false,
-      error: `At least ${RULES.MIN_NATIONAL_ENDORSERS} endorsers are required for a national nomination`,
-    };
-  }
-
-  const distinctErr = assertDistinctEndorsers(input.endorserMemberIds);
-  if (distinctErr) return distinctErr;
-
-  const selfEndorseErr = assertEndorsersNotIncludingNominator(
-    ctx.nominator.id,
-    input.endorserMemberIds,
-  );
-  if (selfEndorseErr) return selfEndorseErr;
-
   if (input.candidateMemberId !== ctx.candidate.id) {
     return { ok: false, error: 'Candidate record mismatch' };
   }
 
-  if (ctx.endorsers.length !== input.endorserMemberIds.length) {
-    return { ok: false, error: 'One or more endorsers were not found' };
-  }
+  if (input.endorserMemberIds.length > 0) {
+    if (input.endorserMemberIds.length < RULES.MIN_NATIONAL_ENDORSERS) {
+      return {
+        ok: false,
+        error: `At least ${RULES.MIN_NATIONAL_ENDORSERS} endorsers are required for a national nomination`,
+      };
+    }
 
-  for (const endorser of ctx.endorsers) {
-    const err = assertEligibleMember(endorser, 'Endorser');
-    if (err) return err;
+    const distinctErr = assertDistinctEndorsers(input.endorserMemberIds);
+    if (distinctErr) return distinctErr;
+
+    const selfEndorseErr = assertEndorsersNotIncludingNominator(
+      ctx.nominator.id,
+      input.endorserMemberIds,
+    );
+    if (selfEndorseErr) return selfEndorseErr;
+
+    if (ctx.endorsers.length !== input.endorserMemberIds.length) {
+      return { ok: false, error: 'One or more endorsers were not found' };
+    }
+
+    for (const endorser of ctx.endorsers) {
+      const err = assertEligibleMember(endorser, 'Endorser');
+      if (err) return err;
+    }
   }
 
   return { ok: true };

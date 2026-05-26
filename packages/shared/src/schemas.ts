@@ -46,17 +46,13 @@ export const submitBallotSchema = z.object({
 export const zonalNominationSchema = z.object({
   electionId: z.string().uuid(),
   candidateMemberId: z.string().uuid(),
-  endorserMemberIds: z
-    .array(z.string().uuid())
-    .min(1, 'At least 1 endorser required'),
+  endorserMemberIds: z.array(z.string().uuid()).default([]),
 });
 
 export const nationalNominationSchema = z.object({
   electionId: z.string().uuid(),
   candidateMemberId: z.string().uuid(),
-  endorserMemberIds: z
-    .array(z.string().uuid())
-    .min(3, 'At least 3 endorsers required for national nomination'),
+  endorserMemberIds: z.array(z.string().uuid()).default([]),
 });
 
 export const candidateResponseSchema = z.object({
@@ -108,11 +104,24 @@ export const candidateStatusUpdateSchema = z.object({
   rejectionReason: z.string().max(500).optional(),
 });
 
-export const memberUpdateSchema = z.object({
-  memberId: z.string().uuid(),
-  goodStanding: z.boolean().optional(),
-  active: z.boolean().optional(),
-});
+export const memberUpdateSchema = z
+  .object({
+    memberId: z.string().uuid(),
+    goodStanding: z.boolean().optional(),
+    active: z.boolean().optional(),
+    position: z.enum(MEMBER_POSITIONS).optional(),
+    agencyName: z.string().min(1).max(200).trim().optional(),
+    isElecom: z.boolean().optional(),
+  })
+  .refine(
+    (data) =>
+      data.goodStanding !== undefined ||
+      data.active !== undefined ||
+      data.position !== undefined ||
+      data.agencyName !== undefined ||
+      data.isElecom !== undefined,
+    { message: 'At least one field to update is required' },
+  );
 
 export const memberSignupSchema = z
   .object({

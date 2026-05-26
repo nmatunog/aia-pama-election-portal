@@ -32,6 +32,19 @@ export async function isSuperuserLicense(env: Env, licenseCode: string): Promise
   return parseSuperuserLicenses(env).includes(normalized);
 }
 
+/** ELECOM via roster flag and/or env-configured superuser license. */
+export function memberHasElecomPrivileges(
+  env: Env,
+  member: { is_elecom?: boolean },
+  licenseCode?: string,
+): boolean {
+  if (member.is_elecom === true) return true;
+  if (licenseCode && parseSuperuserLicenses(env).includes(licenseCode.trim())) {
+    return true;
+  }
+  return false;
+}
+
 export function superuserEmail(env: Env): string {
   return parseAdminEmails(env)[0] ?? 'nmatunog@gmail.com';
 }
