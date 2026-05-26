@@ -26,6 +26,7 @@ function memberActionOptions(
   if (pending) {
     options.push({ value: 'approved', label: 'Approved' });
     options.push({ value: 'disapproved', label: 'Disapproved' });
+    options.push({ value: 'delete', label: 'Delete application' });
   }
 
   if (canGrantElecom && approved) {

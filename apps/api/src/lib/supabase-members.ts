@@ -124,6 +124,21 @@ export async function isSuperuserMember(
   return false;
 }
 
+function signupErrorFromSupabase(status: number, body: string): string {
+  const lower = body.toLowerCase();
+  if (lower.includes('duplicate') || lower.includes('unique') || body.includes('23505')) {
+    return 'This license code is already registered. Use Member Login or contact ELECOM.';
+  }
+  if (lower.includes('approval_status') || lower.includes('position') || lower.includes('agency_name')) {
+    return 'Registration is temporarily unavailable. ELECOM should confirm database migrations 011–012 are applied.';
+  }
+  if (status === 401 || status === 403) {
+    return 'Registration service is misconfigured. Please try again later.';
+  }
+  console.error('Member signup Supabase error:', status, body.slice(0, 500));
+  return 'Could not submit signup. Please verify your license code and try again, or contact ELECOM.';
+}
+
 export async function createMemberSignup(
   env: Env,
   input: {
@@ -168,10 +183,17 @@ export async function createMemberSignup(
             registered_at: new Date().toISOString(),
           }),
         });
-        if (!patch.ok) return { error: 'Could not resubmit application' };
+        if (!patch.ok) {
+          const text = await patch.text();
+          return { error: signupErrorFromSupabase(patch.status, text) };
+        }
         return { ok: true, memberId: row.id };
       }
     }
+  } else {
+    const lookupErr = await existing.text();
+    console.error('Member signup lookup failed:', existing.status, lookupErr.slice(0, 500));
+    return { error: signupErrorFromSupabase(existing.status, lookupErr) };
   }
 
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/members`, {
@@ -193,10 +215,7 @@ export async function createMemberSignup(
 
   if (!res.ok) {
     const text = await res.text();
-    if (text.includes('duplicate') || text.includes('unique')) {
-      return { error: 'License code already registered' };
-    }
-    return { error: 'Could not submit signup' };
+    return { error: signupErrorFromSupabase(res.status, text) };
   }
   const rows = (await res.json()) as { id: string }[];
   return { ok: true, memberId: rows[0]!.id };
@@ -280,7 +299,17 @@ export async function deleteMemberRecord(
     method: 'DELETE',
     headers: supabaseHeaders(env, { Prefer: 'return=minimal' }),
   });
-  if (!res.ok) return { error: 'Could not delete member' };
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('Delete member failed:', res.status, text.slice(0, 500));
+    if (text.includes('foreign key') || text.includes('23503')) {
+      return {
+        error:
+          'Member is linked to election data and cannot be deleted. Mark inactive instead.',
+      };
+    }
+    return { error: 'Could not delete member' };
+  }
   return { ok: true };
 }
 
