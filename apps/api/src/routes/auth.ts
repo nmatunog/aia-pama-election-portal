@@ -56,7 +56,9 @@ authRoutes.post('/login', async (c) => {
   if (!configuredSecret) {
     return c.json({ ok: false, error: 'Login is not configured. Contact ELECOM.' }, 503);
   }
-  if (loginSecret !== configuredSecret) {
+  const inputSecret = loginSecret.trim();
+  const expectedSecret = configuredSecret.trim();
+  if (inputSecret !== expectedSecret) {
     return c.json({ ok: false, error: 'Invalid license code or login secret.' }, 401);
   }
 

@@ -9,6 +9,7 @@ export function LoginForm() {
   const nextPath = searchParams.get('next') ?? '/dashboard';
   const [licenseCode, setLicenseCode] = useState('');
   const [loginSecret, setLoginSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -62,17 +63,26 @@ export function LoginForm() {
         <label htmlFor="loginSecret" className="mb-2 block text-base font-semibold text-[#1C1C1C]">
           Login secret
         </label>
-        <input
-          id="loginSecret"
-          name="loginSecret"
-          type="password"
-          value={loginSecret}
-          onChange={(e) => setLoginSecret(e.target.value)}
-          className={inputField}
-          placeholder="Shared login secret from ELECOM"
-          autoComplete="current-password"
-          required
-        />
+        <div className="relative">
+          <input
+            id="loginSecret"
+            name="loginSecret"
+            type={showSecret ? 'text' : 'password'}
+            value={loginSecret}
+            onChange={(e) => setLoginSecret(e.target.value)}
+            className={`${inputField} pr-20`}
+            placeholder="Shared login secret from ELECOM"
+            autoComplete="current-password"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowSecret((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#63A9FA] underline"
+          >
+            {showSecret ? 'Hide' : 'Show'}
+          </button>
+        </div>
       </div>
       {error && (
         <p className="rounded-lg bg-[#FDF2F5] px-4 py-3 text-sm font-medium text-[#D41245]">
