@@ -15,7 +15,7 @@ import {
   rosterImportSchema,
 } from '@aia-pama/shared';
 import type { Env } from '../env';
-import { verifyElecomCredentials } from '../lib/elecom-auth-config';
+import { superuserEmail, verifyElecomCredentials } from '../lib/elecom-auth-config';
 import { signElecomToken } from '../lib/jwt';
 import { appendAuditLog } from '../lib/supabase-nominations';
 import { getMemberLoginSecret, setMemberLoginSecret } from '../lib/supabase-config';
@@ -47,6 +47,15 @@ import {
 import { requireElecom, type ElecomVariables } from '../middleware/elecom-auth';
 
 export const adminRoutes = new Hono<{ Bindings: Env; Variables: ElecomVariables }>();
+
+function canManageLoginSecret(
+  elecom: { email: string; superuser?: boolean },
+  env: Env,
+): boolean {
+  if (elecom.superuser) return true;
+  const fallbackSuperuserEmail = superuserEmail(env).toLowerCase();
+  return elecom.email.toLowerCase() === fallbackSuperuserEmail;
+}
 
 adminRoutes.post('/login', async (c) => {
   const body = await c.req.json().catch(() => null);
@@ -602,7 +611,7 @@ adminRoutes.post('/election/reset-current', async (c) => {
 /** Get current login secret (masked) — superuser only */
 adminRoutes.get('/login-secret', async (c) => {
   const elecom = c.get('elecom');
-  if (!elecom.superuser) {
+  if (!canManageLoginSecret(elecom, c.env)) {
     return c.json({ ok: false, error: 'Superuser access required.' }, 403);
   }
   const current = await getMemberLoginSecret(c.env);
@@ -616,7 +625,7 @@ adminRoutes.get('/login-secret', async (c) => {
 /** Update member login secret — superuser only */
 adminRoutes.patch('/login-secret', async (c) => {
   const elecom = c.get('elecom');
-  if (!elecom.superuser) {
+  if (!canManageLoginSecret(elecom, c.env)) {
     return c.json({ ok: false, error: 'Superuser access required.' }, 403);
   }
 
