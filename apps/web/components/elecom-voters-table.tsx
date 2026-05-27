@@ -10,7 +10,7 @@ import {
   type MemberKebabAction,
 } from '@/components/member-actions-kebab';
 import { adminFetch } from '@/lib/admin-fetch';
-import { inputField, primaryBtn } from '@/lib/layout-classes';
+import { inputField } from '@/lib/layout-classes';
 
 type MemberAction =
   | 'disapproved'
@@ -427,14 +427,21 @@ export function ElecomVotersTable({
                       {canToggleFlags ? (
                         <button
                           type="button"
-                          className={primaryBtn}
                           disabled={busyId === v.memberId}
                           onClick={() => void toggleEligibility(v, 'goodStanding')}
+                          aria-label={v.goodStanding ? 'Good standing: Yes (click to set No)' : 'Good standing: No (click to set Yes)'}
+                          className={`flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D41245] disabled:opacity-50 ${
+                            v.goodStanding ? 'bg-[#1A7A3A]' : 'bg-[#D1D5DB]'
+                          }`}
                         >
-                          {v.goodStanding ? 'Yes' : 'No'}
+                          <span
+                            className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                              v.goodStanding ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
                         </button>
                       ) : (
-                        <span className="text-xs text-[#4D4D4D]">
+                        <span className={`text-xs font-medium ${v.goodStanding ? 'text-[#1A7A3A]' : 'text-[#4D4D4D]'}`}>
                           {v.goodStanding ? 'Yes' : 'No'}
                         </span>
                       )}
@@ -443,14 +450,21 @@ export function ElecomVotersTable({
                       {canToggleFlags ? (
                         <button
                           type="button"
-                          className={primaryBtn}
                           disabled={busyId === v.memberId}
                           onClick={() => void toggleEligibility(v, 'active')}
+                          aria-label={v.active ? 'Active: Yes (click to set No)' : 'Active: No (click to set Yes)'}
+                          className={`flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D41245] disabled:opacity-50 ${
+                            v.active ? 'bg-[#1A7A3A]' : 'bg-[#D1D5DB]'
+                          }`}
                         >
-                          {v.active ? 'Yes' : 'No'}
+                          <span
+                            className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                              v.active ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
                         </button>
                       ) : (
-                        <span className="text-xs text-[#4D4D4D]">
+                        <span className={`text-xs font-medium ${v.active ? 'text-[#1A7A3A]' : 'text-[#4D4D4D]'}`}>
                           {v.active ? 'Yes' : 'No'}
                         </span>
                       )}
