@@ -42,11 +42,10 @@ export default function ElecomMembersPage() {
   return (
     <>
       <h2 className={pageTitle}>Member roster</h2>
-      <p className="mt-2 text-base text-[#4D4D4D]">
-        One place to manage members: for pending signups, set <strong>Good standing</strong>{' '}
-        and <strong>Active</strong> to Yes — you will be asked to approve when both are Yes.
-        Use <strong>Disapproved</strong> in Actions to reject. Superusers may{' '}
-        <strong>Grant ELECOM</strong> or revoke it.
+      <p className="mt-2 max-w-4xl text-base text-[#4D4D4D]">
+        For pending signups, set <strong>Good standing</strong> and <strong>Active</strong> to
+        Yes. You will then be prompted to approve. Use <strong>Disapproved</strong> in Actions to
+        reject. Superusers may <strong>Grant ELECOM</strong> or revoke it.
       </p>
       <div className="mt-6">
         <Suspense fallback={<p className="text-[#4D4D4D]">Loading roster…</p>}>

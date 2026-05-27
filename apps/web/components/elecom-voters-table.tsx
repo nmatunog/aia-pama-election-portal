@@ -264,67 +264,69 @@ export function ElecomVotersTable({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-lg border-2 border-[#E8E6E3] bg-white px-4 py-3 text-center">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white px-4 py-3 text-center">
           <p className="text-xl font-bold text-[#D41245]">{localStats.total}</p>
           <p className="text-xs text-[#4D4D4D]">In roster</p>
         </div>
-        <div className="rounded-lg border-2 border-[#9A6700]/40 bg-[#FFFBEB] px-4 py-3 text-center">
+        <div className="rounded-xl border border-[#9A6700]/40 bg-[#FFFBEB] px-4 py-3 text-center">
           <p className="text-xl font-bold text-[#9A6700]">{localStats.pending}</p>
           <p className="text-xs text-[#4D4D4D]">Pending signup</p>
         </div>
-        <div className="rounded-lg border-2 border-[#E8E6E3] bg-white px-4 py-3 text-center">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white px-4 py-3 text-center">
           <p className="text-xl font-bold text-[#D41245]">{localStats.eligible}</p>
           <p className="text-xs text-[#4D4D4D]">Eligible to vote</p>
         </div>
-        <div className="rounded-lg border-2 border-[#E8E6E3] bg-white px-4 py-3 text-center">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white px-4 py-3 text-center">
           <p className="text-xl font-bold text-[#D41245]">{localStats.voted}</p>
           <p className="text-xs text-[#4D4D4D]">Ballots cast</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {statusTabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setStatusFilter(tab.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              statusFilter === tab.id
-                ? 'bg-[#D41245] text-white'
-                : 'border-2 border-[#E8E6E3] bg-white text-[#1C1C1C] hover:border-[#D41245]/40'
-            }`}
-          >
-            {tab.label}
-            {tab.count !== undefined ? ` (${tab.count})` : ''}
-          </button>
-        ))}
-      </div>
+      <div className="rounded-xl border border-[#E8E6E3] bg-[#F8F7F5] p-3 sm:p-4">
+        <div className="flex flex-wrap gap-2">
+          {statusTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setStatusFilter(tab.id)}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                statusFilter === tab.id
+                  ? 'bg-[#D41245] text-white'
+                  : 'border border-[#E8E6E3] bg-white text-[#1C1C1C] hover:border-[#D41245]/40'
+              }`}
+            >
+              {tab.label}
+              {tab.count !== undefined ? ` (${tab.count})` : ''}
+            </button>
+          ))}
+        </div>
 
-      <div className="flex flex-wrap items-center gap-4">
-        <label className="text-sm font-semibold text-[#1C1C1C]">
-          Zone
-          <select
-            className="ml-2 rounded-lg border-2 border-[#E8E6E3] bg-white px-3 py-2 text-sm"
-            value={zone}
-            onChange={(e) => {
-              setZone(e.target.value);
-              void reload(e.target.value);
-            }}
-          >
-            <option value="all">All zones</option>
-            {ZONES.map((z) => (
-              <option key={z} value={z}>
-                {z}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="text-sm font-semibold text-[#1C1C1C]">
+            Zone
+            <select
+              className="ml-2 rounded-lg border border-[#E8E6E3] bg-white px-3 py-2 text-sm"
+              value={zone}
+              onChange={(e) => {
+                setZone(e.target.value);
+                void reload(e.target.value);
+              }}
+            >
+              <option value="all">All zones</option>
+              {ZONES.map((z) => (
+                <option key={z} value={z}>
+                  {z}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {localStats.pending > 0 && statusFilter !== 'pending_approval' && (
-        <p className="rounded-lg border-2 border-[#9A6700] bg-[#FFFBEB] px-4 py-3 text-sm text-[#1C1C1C]">
+        <p className="rounded-xl border border-[#9A6700] bg-[#FFFBEB] px-4 py-3 text-sm text-[#1C1C1C]">
           <strong>{localStats.pending}</strong> signup(s) need approval — open the{' '}
           <button
             type="button"
@@ -345,12 +347,12 @@ export function ElecomVotersTable({
       )}
 
       {filteredRows.length === 0 ? (
-        <p className="rounded-lg border-2 border-[#E8E6E3] bg-white px-4 py-6 text-sm text-[#4D4D4D]">
+        <p className="rounded-xl border border-[#E8E6E3] bg-white px-4 py-6 text-sm text-[#4D4D4D]">
           No members match this filter. New applications appear under{' '}
           <strong>Pending signup</strong> after registering at /register.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border-2 border-[#E8E6E3] bg-white">
+        <div className="overflow-x-auto rounded-xl border border-[#E8E6E3] bg-white">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-[#E8E6E3] bg-[#F8F7F5]">
               <tr>

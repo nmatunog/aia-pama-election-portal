@@ -66,10 +66,15 @@ export default async function ElecomAdminPage() {
 
   return (
     <>
-      <h2 className={pageTitle}>{data.election.cycle_year} Election Overview</h2>
-      <p className="mt-2 text-base text-[#4D4D4D]">
-        Current phase: <span className="font-semibold text-[#1C1C1C]">{phaseLabel}</span>
-      </p>
+      <section className="rounded-xl border-2 border-[#E8E6E3] bg-white p-5 sm:p-6">
+        <h2 className={pageTitle}>{data.election.cycle_year} Election overview</h2>
+        <p className="mt-2 text-base text-[#4D4D4D]">
+          Current phase:{' '}
+          <span className="rounded-full bg-[#F8F7F5] px-3 py-1 text-sm font-semibold text-[#1C1C1C]">
+            {phaseLabel}
+          </span>
+        </p>
+      </section>
 
       <ElecomElectionAdminPanel
         electionId={data.election.id}
@@ -92,7 +97,11 @@ export default async function ElecomAdminPage() {
         disabled={data.election.phase === 'certified'}
       />
 
-      <section className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+      <section className="mt-8">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-[#4D4D4D]">
+          Nomination pipeline
+        </h3>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         {[
           ['pending_acceptance', 'Awaiting nominee'],
           ['pending_approval', 'Awaiting ELECOM'],
@@ -102,16 +111,21 @@ export default async function ElecomAdminPage() {
         ].map(([key, label]) => (
           <div
             key={key}
-            className="rounded-lg border-2 border-[#E8E6E3] bg-white px-4 py-3 text-center"
+            className="rounded-xl border border-[#E8E6E3] bg-white px-4 py-3 text-center"
           >
             <p className="text-2xl font-bold text-[#D41245]">{counts[key] ?? 0}</p>
             <p className="mt-1 text-xs text-[#4D4D4D]">{label}</p>
           </div>
         ))}
+        </div>
       </section>
 
-      <section className="mt-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border-2 border-[#E8E6E3] bg-white px-4 py-3">
+      <section className="mt-6">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-[#4D4D4D]">
+          Key totals
+        </h3>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white px-4 py-3">
           <p className="text-2xl font-bold text-[#D41245]">{data.nominationCount ?? 0}</p>
           <p className="text-sm text-[#4D4D4D]">
             <Link href="/admin/nominations" className="font-semibold text-[#63A9FA] underline">
@@ -119,7 +133,7 @@ export default async function ElecomAdminPage() {
             </Link>
           </p>
         </div>
-        <div className="rounded-lg border-2 border-[#E8E6E3] bg-white px-4 py-3">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white px-4 py-3">
           <p className="text-2xl font-bold text-[#D41245]">{voters.eligible}</p>
           <p className="text-sm text-[#4D4D4D]">
             <Link href="/admin/voters" className="font-semibold text-[#63A9FA] underline">
@@ -127,9 +141,10 @@ export default async function ElecomAdminPage() {
             </Link>
           </p>
         </div>
-        <div className="rounded-lg border-2 border-[#E8E6E3] bg-white px-4 py-3">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white px-4 py-3">
           <p className="text-2xl font-bold text-[#D41245]">{voters.voted}</p>
           <p className="text-sm text-[#4D4D4D]">Ballots cast (when voting opens)</p>
+        </div>
         </div>
       </section>
 

@@ -92,7 +92,7 @@ export function ElecomElectionAdminPanel({ electionId, cycleYear, phase }: Props
   }
 
   return (
-    <section className="mt-8 rounded-xl border-2 border-[#63A9FA] bg-[#F8F7F5] p-5 sm:p-6">
+    <section className="mt-8 rounded-xl border border-[#E8E6E3] bg-[#F8F7F5] p-5 sm:p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-[#63A9FA]">
         Election & roster administration
       </p>
@@ -100,8 +100,8 @@ export function ElecomElectionAdminPanel({ electionId, cycleYear, phase }: Props
         Current cycle: <strong>{cycleYear}</strong> · phase <strong>{phase}</strong>
       </p>
 
-      <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:flex-wrap">
-        <div className="min-w-[12rem] flex-1 rounded-lg border border-[#E8E6E3] bg-white p-4">
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white p-4">
           <h4 className="font-semibold text-[#1C1C1C]">Reset current election</h4>
           <p className="mt-1 text-xs text-[#4D4D4D]">
             Clears ballots and candidacies; stays on same election row; phase → nomination.
@@ -116,7 +116,7 @@ export function ElecomElectionAdminPanel({ electionId, cycleYear, phase }: Props
           </button>
         </div>
 
-        <div className="min-w-[12rem] flex-1 rounded-lg border border-[#E8E6E3] bg-white p-4">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white p-4">
           <h4 className="font-semibold text-[#1C1C1C]">Start new election cycle</h4>
           <p className="mt-1 text-xs text-[#4D4D4D]">
             After certified/failed (or force). Creates a new election record.
@@ -130,10 +130,10 @@ export function ElecomElectionAdminPanel({ electionId, cycleYear, phase }: Props
               onChange={(e) => setNewYear(e.target.value)}
             />
           </label>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 space-y-2">
             <button
               type="button"
-              className={primaryBtn}
+              className={`${primaryBtn} w-full`}
               disabled={!!busy}
               onClick={() => newCycle(false)}
             >
@@ -141,7 +141,7 @@ export function ElecomElectionAdminPanel({ electionId, cycleYear, phase }: Props
             </button>
             <button
               type="button"
-              className={secondaryBtn}
+              className={`${secondaryBtn} w-full`}
               disabled={!!busy}
               onClick={() => newCycle(true)}
             >
@@ -150,7 +150,7 @@ export function ElecomElectionAdminPanel({ electionId, cycleYear, phase }: Props
           </div>
         </div>
 
-        <div className="min-w-[12rem] flex-1 rounded-lg border border-[#E8E6E3] bg-white p-4">
+        <div className="rounded-xl border border-[#E8E6E3] bg-white p-4">
           <h4 className="font-semibold text-[#1C1C1C]">Import voter roster</h4>
           <p className="mt-1 text-xs text-[#4D4D4D]">
             Re-seed current-year template (dev). Production: use CSV import API later.
