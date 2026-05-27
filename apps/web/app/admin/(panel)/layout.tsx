@@ -24,20 +24,26 @@ export default async function ElecomPanelLayout({
   return (
     <div className={pageShell}>
       <header className="border-b border-[#E8E6E3] bg-white safe-top">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <div>
-            <h1 className="text-lg font-bold text-[#1C1C1C] sm:text-xl">ELECOM Administration</h1>
-            <p className="text-sm text-[#4D4D4D]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-bold text-[#1C1C1C] sm:text-xl">
+              ELECOM Administration
+            </h1>
+            <p className="truncate text-sm text-[#4D4D4D]">
               {session.email}
-              {session.viaMemberLogin ? ' · superuser' : ''}
+              {session.isSuperuser ? (
+                <span className="ml-2 rounded-full bg-[#F8F7F5] px-2 py-0.5 text-xs font-semibold text-[#4D4D4D]">
+                  superuser
+                </span>
+              ) : null}
             </p>
           </div>
-          <div className="flex flex-wrap gap-4">
-            <Link href="/" className="text-base font-semibold text-[#63A9FA] underline">
+          <div className="flex shrink-0 items-center gap-4">
+            <Link href="/" className="text-sm font-semibold text-[#63A9FA] underline">
               Public portal
             </Link>
             <form action={signOut}>
-              <button type="submit" className="text-base font-semibold text-[#63A9FA] underline">
+              <button type="submit" className="text-sm font-semibold text-[#63A9FA] underline">
                 Sign out
               </button>
             </form>
