@@ -18,6 +18,7 @@ import type { Env } from '../env';
 import { verifyElecomCredentials } from '../lib/elecom-auth-config';
 import { signElecomToken } from '../lib/jwt';
 import { appendAuditLog } from '../lib/supabase-nominations';
+import { getMemberLoginSecret, setMemberLoginSecret } from '../lib/supabase-config';
 import {
   getCandidateStatusCounts,
   getElectionOverview,
@@ -596,4 +597,48 @@ adminRoutes.post('/election/reset-current', async (c) => {
     ok: true,
     message: 'Current election cleared and reset to nomination phase.',
   });
+});
+
+/** Get current login secret (masked) — superuser only */
+adminRoutes.get('/login-secret', async (c) => {
+  const elecom = c.get('elecom');
+  if (!elecom.superuser) {
+    return c.json({ ok: false, error: 'Superuser access required.' }, 403);
+  }
+  const current = await getMemberLoginSecret(c.env);
+  return c.json({
+    ok: true,
+    isSet: !!current,
+    masked: current ? `${current.slice(0, 2)}${'•'.repeat(Math.max(0, current.length - 2))}` : null,
+  });
+});
+
+/** Update member login secret — superuser only */
+adminRoutes.patch('/login-secret', async (c) => {
+  const elecom = c.get('elecom');
+  if (!elecom.superuser) {
+    return c.json({ ok: false, error: 'Superuser access required.' }, 403);
+  }
+
+  const body = await c.req.json().catch(() => null);
+  const newSecret: unknown = body?.secret;
+  if (typeof newSecret !== 'string' || newSecret.trim().length < 6) {
+    return c.json({ ok: false, error: 'Secret must be at least 6 characters.' }, 400);
+  }
+
+  const result = await setMemberLoginSecret(c.env, newSecret.trim());
+  if (!result.ok) {
+    return c.json({ ok: false, error: result.error }, 500);
+  }
+
+  await appendAuditLog(c.env, {
+    actorType: 'elecom',
+    actorId: elecom.email,
+    action: 'config.login_secret_changed',
+    entity: 'app_config',
+    entityId: 'member_login_secret',
+    payload: {},
+  });
+
+  return c.json({ ok: true, message: 'Login secret updated.' });
 });

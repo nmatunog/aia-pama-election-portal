@@ -47,7 +47,7 @@ export default async function ElecomPanelLayout({
 
       <main className={`${mainWide} max-w-6xl safe-bottom`}>
         <div className="mt-6">
-          <ElecomNav />
+          <ElecomNav isSuperuser={session.isSuperuser} />
         </div>
         <div className="mt-6">{children}</div>
       </main>

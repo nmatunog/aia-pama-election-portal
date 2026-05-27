@@ -3,15 +3,20 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const links = [
+const baseLinks = [
   { href: '/admin', label: 'Overview' },
   { href: '/admin/voters', label: 'Members' },
   { href: '/admin/candidates', label: 'Nominees' },
   { href: '/admin/nominations', label: 'Nominations' },
 ];
 
-export function ElecomNav() {
+type Props = { isSuperuser?: boolean };
+
+export function ElecomNav({ isSuperuser }: Props) {
   const pathname = usePathname();
+  const links = isSuperuser
+    ? [...baseLinks, { href: '/admin/settings', label: 'Settings' }]
+    : baseLinks;
 
   return (
     <nav className="flex flex-wrap gap-2 border-b border-[#E8E6E3] pb-4">

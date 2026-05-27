@@ -8,6 +8,7 @@ import {
   superuserEmail,
 } from '../lib/elecom-auth-config';
 import { signVoterToken, verifyVoterToken } from '../lib/jwt';
+import { getMemberLoginSecret } from '../lib/supabase-config';
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
 
@@ -51,7 +52,7 @@ authRoutes.post('/login', async (c) => {
 
   const { licenseCode, loginSecret } = parsed.data;
 
-  const configuredSecret = c.env.MEMBER_LOGIN_SECRET;
+  const configuredSecret = await getMemberLoginSecret(c.env);
   if (!configuredSecret) {
     return c.json({ ok: false, error: 'Login is not configured. Contact ELECOM.' }, 503);
   }
