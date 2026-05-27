@@ -12,4 +12,6 @@ export type Env = {
   ELECOM_ADMIN_PASSWORD?: string;
   /** Comma-separated license codes with ELECOM superuser access */
   ELECOM_SUPERUSER_LICENSES?: string;
+  /** Shared secret all members use as second factor instead of OTP email */
+  MEMBER_LOGIN_SECRET?: string;
 };

@@ -2,6 +2,12 @@ import { z } from 'zod';
 import { ELECTION_PHASES, MEMBER_POSITIONS, ZONES } from './constants';
 import { formatMemberFullName } from './member-name';
 
+/** License code + shared secret login (replaces OTP email flow) */
+export const memberLoginSchema = z.object({
+  licenseCode: z.string().min(1, 'License code is required').max(50).trim(),
+  loginSecret: z.string().min(1, 'Login secret is required').max(200),
+});
+
 export const validateMemberSchema = z.object({
   licenseCode: z
     .string()

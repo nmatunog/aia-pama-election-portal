@@ -1,9 +1,7 @@
 import { Hono } from 'hono';
-import { hashLicenseCode, requestOtpSchema, verifyOtpSchema } from '@aia-pama/shared';
+import { hashLicenseCode, memberLoginSchema } from '@aia-pama/shared';
 import type { Env } from '../env';
 import { findMemberByLicenseHash } from '../lib/supabase';
-import { sendOtpEmail } from '../lib/email';
-import { saveOtpSession, verifyOtpSessionDb } from '../lib/supabase-otp';
 import {
   isSuperuserLicense,
   memberHasElecomPrivileges,
@@ -13,146 +11,67 @@ import { signVoterToken, verifyVoterToken } from '../lib/jwt';
 
 export const authRoutes = new Hono<{ Bindings: Env }>();
 
-authRoutes.post('/request-otp', async (c) => {
-  const body = await c.req.json().catch(() => null);
-  const parsed = requestOtpSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return c.json(
-      { ok: false, error: 'Invalid request', details: parsed.error.flatten() },
-      400,
-    );
-  }
-
-  const { licenseCode, contact } = parsed.data;
-  const licenseHash = await hashLicenseCode(licenseCode);
-  const member = await findMemberByLicenseHash(c.env, licenseHash);
-
-  if (!member) {
-    return c.json(
-      {
-        ok: false,
-        error:
-          'License code not found. New members may register at /register for ELECOM approval.',
-      },
-      400,
-    );
-  }
+function checkMemberEligibility(member: {
+  approval_status?: string;
+  active: boolean;
+  good_standing: boolean;
+}): { ok: true } | { ok: false; error: string; status: 400 | 403 } {
   const approval = member.approval_status ?? 'approved';
   if (approval === 'pending_approval') {
-    return c.json(
-      {
-        ok: false,
-        error: 'Your membership signup is pending ELECOM approval.',
-      },
-      403,
-    );
+    return { ok: false, error: 'Your membership signup is pending ELECOM approval.', status: 403 };
   }
   if (approval === 'rejected') {
-    return c.json({ ok: false, error: 'Membership application was not approved.' }, 403);
+    return { ok: false, error: 'Membership application was not approved.', status: 403 };
   }
   if (!member.active && !member.good_standing) {
-    return c.json(
-      {
-        ok: false,
-        error:
-          'Your membership is on file but not yet active. If ELECOM recently approved you, ask them to confirm good standing and active status.',
-      },
-      403,
-    );
+    return {
+      ok: false,
+      error:
+        'Your membership is on file but not yet active. If ELECOM recently approved you, ask them to confirm good standing and active status.',
+      status: 403,
+    };
   }
   if (!member.active) {
-    return c.json(
-      {
-        ok: false,
-        error: 'Your membership account is inactive. Contact ELECOM for assistance.',
-      },
-      403,
-    );
+    return { ok: false, error: 'Your membership account is inactive. Contact ELECOM for assistance.', status: 403 };
   }
   if (!member.good_standing) {
-    return c.json(
-      {
-        ok: false,
-        error: 'Your membership is not in good standing. Contact ELECOM for assistance.',
-      },
-      403,
-    );
+    return { ok: false, error: 'Your membership is not in good standing. Contact ELECOM for assistance.', status: 403 };
   }
+  return { ok: true };
+}
 
-  const sessionId = crypto.randomUUID();
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
-
-  const saved = await saveOtpSession(c.env, {
-    sessionId,
-    licenseHash,
-    memberId: member.id,
-    contact,
-    memberName: member.full_name,
-    otp,
-  });
-
-  if (!saved.ok) {
-    return c.json({ ok: false, error: saved.error }, 500);
-  }
-
-  const isDev = c.env.ENVIRONMENT === 'development';
-
-  if (!isDev) {
-    const emailed = await sendOtpEmail(c.env, contact, otp, member.full_name);
-    if (!emailed.ok) {
-      return c.json({ ok: false, error: emailed.error }, 503);
-    }
-  }
-
-  const response: {
-    ok: true;
-    sessionId: string;
-    devOtp?: string;
-    message?: string;
-  } = {
-    ok: true,
-    sessionId,
-    message: isDev
-      ? 'Development mode: use the code shown below.'
-      : 'If this email is registered, a one-time code was sent. Check your inbox and spam folder.',
-  };
-
-  if (isDev) {
-    response.devOtp = otp;
-    if (c.env.RESEND_API_KEY) {
-      const emailed = await sendOtpEmail(c.env, contact, otp, member.full_name);
-      if (!emailed.ok) {
-        response.message = `${response.message} (Email not sent: ${emailed.error})`;
-      }
-    }
-  }
-
-  return c.json(response);
-});
-
-authRoutes.post('/verify-otp', async (c) => {
+/** License code + shared secret login — no email required */
+authRoutes.post('/login', async (c) => {
   const body = await c.req.json().catch(() => null);
-  const parsed = verifyOtpSchema.safeParse(body);
+  const parsed = memberLoginSchema.safeParse(body);
 
   if (!parsed.success) {
+    return c.json({ ok: false, error: 'Invalid request', details: parsed.error.flatten() }, 400);
+  }
+
+  const { licenseCode, loginSecret } = parsed.data;
+
+  const configuredSecret = c.env.MEMBER_LOGIN_SECRET;
+  if (!configuredSecret) {
+    return c.json({ ok: false, error: 'Login is not configured. Contact ELECOM.' }, 503);
+  }
+  if (loginSecret !== configuredSecret) {
+    return c.json({ ok: false, error: 'Invalid license code or login secret.' }, 401);
+  }
+
+  const licenseHash = await hashLicenseCode(licenseCode);
+  const member = await findMemberByLicenseHash(c.env, licenseHash);
+
+  if (!member) {
     return c.json(
-      { ok: false, error: 'Invalid request', details: parsed.error.flatten() },
+      { ok: false, error: 'License code not found. New members may register at /register for ELECOM approval.' },
       400,
     );
   }
 
-  const { licenseCode, otp, sessionId } = parsed.data;
-  const licenseHash = await hashLicenseCode(licenseCode);
-  const verified = await verifyOtpSessionDb(c.env, sessionId, licenseHash, otp);
-
-  if (!verified.ok) {
-    return c.json({ ok: false, error: 'Invalid or expired OTP' }, 401);
-  }
-
-  const member = await findMemberByLicenseHash(c.env, licenseHash);
-  if (!member) {
-    return c.json({ ok: false, error: 'Member not found' }, 404);
+  const eligibility = checkMemberEligibility(member);
+  if (!eligibility.ok) {
+    return c.json({ ok: false, error: eligibility.error }, eligibility.status);
   }
 
   const secret = c.env.JWT_SECRET;
@@ -160,10 +79,11 @@ authRoutes.post('/verify-otp', async (c) => {
     return c.json({ ok: false, error: 'Server misconfigured' }, 500);
   }
 
-  const isSuperuser = await isSuperuserLicense(c.env, parsed.data.licenseCode);
-  const isElecom = memberHasElecomPrivileges(c.env, member, parsed.data.licenseCode);
+  const isSuperuser = await isSuperuserLicense(c.env, licenseCode);
+  const isElecom = memberHasElecomPrivileges(c.env, member, licenseCode);
   const elecomEmail =
     member.contact_email?.trim() || (isElecom ? superuserEmail(c.env) : undefined);
+
   const token = await signVoterToken(
     {
       sub: member.id,
@@ -186,6 +106,22 @@ authRoutes.post('/verify-otp', async (c) => {
       isElecom,
     },
   });
+});
+
+/** @deprecated — kept for backward compat; use /auth/login */
+authRoutes.post('/request-otp', async (c) => {
+  return c.json(
+    { ok: false, error: 'OTP login is disabled. Use license code + login secret at /login.' },
+    410,
+  );
+});
+
+/** @deprecated — kept for backward compat; use /auth/login */
+authRoutes.post('/verify-otp', async (c) => {
+  return c.json(
+    { ok: false, error: 'OTP login is disabled. Use license code + login secret at /login.' },
+    410,
+  );
 });
 
 authRoutes.get('/me', async (c) => {

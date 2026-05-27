@@ -20,7 +20,7 @@ export default function LoginPage() {
           <h1 className={pageTitle}>Member sign in</h1>
           <p className={pageLead}>
             Sign in to nominate candidates, vote, or view your election dashboard.
-            Step 1: verify membership. Step 2: enter your one-time password.
+            Enter your AIA license code and the login secret provided by ELECOM.
           </p>
           <p className="mt-3 text-sm text-[#4D4D4D]">
             Not registered yet?{' '}
