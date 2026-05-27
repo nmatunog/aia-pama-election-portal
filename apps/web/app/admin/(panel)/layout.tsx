@@ -38,12 +38,18 @@ export default async function ElecomPanelLayout({
               ) : null}
             </p>
           </div>
-          <div className="flex shrink-0 items-center gap-4">
-            <Link href="/" className="text-sm font-semibold text-[#63A9FA] underline">
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex h-9 items-center text-sm font-semibold leading-none text-[#63A9FA] underline underline-offset-2"
+            >
               Public portal
             </Link>
             <form action={signOut}>
-              <button type="submit" className="text-sm font-semibold text-[#63A9FA] underline">
+              <button
+                type="submit"
+                className="inline-flex h-9 items-center text-sm font-semibold leading-none text-[#63A9FA] underline underline-offset-2"
+              >
                 Sign out
               </button>
             </form>
