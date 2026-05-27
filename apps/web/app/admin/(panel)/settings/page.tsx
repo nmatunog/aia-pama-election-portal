@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
-import { getElecomSession } from '@/lib/admin-session';
+import { cookies } from 'next/headers';
+import { getElecomSession, getElecomBearerToken } from '@/lib/admin-session';
 import { adminWorkerFetch } from '@/lib/admin-worker-api';
 import { pageTitle } from '@/lib/layout-classes';
 import { LoginSecretForm } from './login-secret-form';
@@ -8,7 +9,14 @@ export default async function AdminSettingsPage() {
   const session = await getElecomSession();
   if (!session?.isSuperuser) redirect('/admin');
 
-  const res = await adminWorkerFetch('/admin/login-secret');
+  // Build a synthetic Request so adminWorkerFetch can forward the session cookie
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.getAll().map(c => `${c.name}=${c.value}`).join('; ');
+  const syntheticRequest = new Request('http://localhost/admin/settings', {
+    headers: { cookie: cookieHeader },
+  });
+
+  const res = await adminWorkerFetch('/admin/login-secret', {}, syntheticRequest);
   const data = (await res.json()) as {
     ok: boolean;
     isSet?: boolean;
